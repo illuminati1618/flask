@@ -17,7 +17,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 # Allowed servers for cross-origin resource sharing (CORS), these are GitHub Pages and localhost for GitHub Pages testing
-cors = CORS(app, supports_credentials=True, origins=['http://localhost:4100', 'http://127.0.0.1:4100', 'https://nighthawkcoders.github.io'])
+cors = CORS(app, supports_credentials=True, origins=['http://localhost:4500', 'http://127.0.0.1:4500', 'https://open-coding-society.github.io'])
 
 # System Defaults
 app.config['ADMIN_USER'] = os.environ.get('ADMIN_USER') or 'admin'
@@ -73,7 +73,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 app.config['GITHUB_API_URL'] = 'https://api.github.com'
 app.config['GITHUB_TOKEN'] = os.environ.get('GITHUB_TOKEN') or None
 app.config['GITHUB_TARGET_TYPE'] = os.environ.get('GITHUB_TARGET_TYPE') or 'user'
-app.config['GITHUB_TARGET_NAME'] = os.environ.get('GITHUB_TARGET_NAME') or 'nighthawkcoders'
+app.config['GITHUB_TARGET_NAME'] = os.environ.get('GITHUB_TARGET_NAME') or 'open-coding-society'
 
 # KASM settings
 app.config['KASM_SERVER'] = os.environ.get('KASM_SERVER') or 'https://kasm.nighthawkcodingsociety.com'

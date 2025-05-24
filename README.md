@@ -14,7 +14,7 @@
 
 Use this project to create a Flask Server.
 
-- GitHub link: [flask_2025](https://github.com/nighthawkcoders/flask_2025)
+- GitHub link: [flask](https://github.com/open-coding-society/flask)
 - The runtime link is published under the About on the GitHub link.
 - `Create a template from this repository` if you plan on making GitHub changes.
 
@@ -25,11 +25,11 @@ Use this project to create a Flask Server.
 - Open a Terminal, clone a project and `cd` into the project directory.  Use a `different link` and name for `name` for clone to match your repo.
 
 ```bash
-mkdir -p ~/nighthawk; cd ~/nighthawk
+mkdir -p ~/open; cd ~/open
 
-git clone https://github.com/nighthawkcoders/flask_2025.git
+git clone https://github.com/open-coding-ocietyflask.git
 
-cd flask_2025
+cd flask
 ```
 
 - Install python dependencies for Flask, etc.
@@ -102,11 +102,11 @@ pip install -r requirements.txt
 
 The key files and directories in this project are in this online article.
 
-[Flask Anatomy](https://nighthawkcoders.github.io/portfolio_2025/flask-anatomy)
+[Flask Anatomy](https://open-coding-society.github.io/pages/flask-anatomy)
 
 Or read this entire series of articles starting with the Intro, Anatomy, and more ...
 
-[Flask Intro](https://nighthawkcoders.github.io/portfolio_2025/flask-intro)
+[Flask Intro](https://open-coding-society.github.io/pages/flask-intro)
 
 ### Implementation Summary
 
