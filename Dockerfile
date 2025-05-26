@@ -11,9 +11,9 @@ RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install gunicorn
 
-ENV GUNICORN_CMD_ARGS="--workers=1 --bind=0.0.0.0:8087"
+ENV GUNICORN_CMD_ARGS="--workers=1 --bind=0.0.0.0:8587"
 
-EXPOSE 8087
+EXPOSE 8587
 
 # Define environment variable
 ENV FLASK_ENV=production
