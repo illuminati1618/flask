@@ -1,30 +1,26 @@
-FROM docker.io/python:3.12
+FROM python:3.12-slim
 
-# Set the working directory
-WORKDIR /
+# Install minimal build tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential cmake libglib2.0-dev libsm6 libxext6 libxrender-dev && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install necessary tools and libraries
-RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y --no-install-recommends \
-        python3 python3-pip git cmake build-essential \
-        libboost-all-dev libopenblas-dev liblapack-dev \
-        libglib2.0-dev libsm6 libxext6 libxrender-dev
+# Pre-install dlib and face_recognition
+RUN pip install --no-cache-dir dlib face_recognition
 
-# Copy application files
-COPY . /
+# Copy application code
+WORKDIR /app
+COPY . .
 
-# Upgrade pip and install Python dependencies
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
-
-# Set Gunicorn command-line arguments
-ENV GUNICORN_CMD_ARGS="--workers=1 --bind=0.0.0.0:8587"
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose the application port
 EXPOSE 8587
 
-# Define environment variable
+# Set environment variables
 ENV FLASK_ENV=production
+ENV GUNICORN_CMD_ARGS="--workers=1 --bind=0.0.0.0:8587"
 
 # Run the application
 CMD ["gunicorn", "main:app"]
