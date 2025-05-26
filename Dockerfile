@@ -4,7 +4,7 @@ WORKDIR /
 
 # --- [Install python and pip] ---
 RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y python3 python3-pip git
+    apt-get install -y python3 python3-pip git cmake
 COPY . /
 
 RUN pip install --upgrade pip
