@@ -102,11 +102,11 @@ pip install -r requirements.txt
 
 The key files and directories in this project are in this online article.
 
-[Flask Anatomy](https://open-coding-society.github.io/pages/flask-anatomy)
+[Flask Anatomy](https://pages.opencodingsociety.com/flask-anatomy)
 
 Or read this entire series of articles starting with the Intro, Anatomy, and more ...
 
-[Flask Intro](https://open-coding-society.github.io/pages/flask-intro)
+[Flask Intro](https://pages.opencodingsociety.com/flask-intro)
 
 ### Implementation Summary
 
