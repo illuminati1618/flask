@@ -1,8 +1,8 @@
 # imports from flask
 from flask_socketio import SocketIO, send, emit
+from flask import Flask
 
-# import "objects" from "this" project
-from __init__ import app, db, login_manager  # Key Flask objects 
+app = Flask(__name__)
 
 socketio = SocketIO(app, cors_allowed_origins=[
     "https://hypernova101.github.io",
