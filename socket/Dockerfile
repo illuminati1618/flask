@@ -21,4 +21,4 @@ EXPOSE 8500
 ENV FLASK_ENV=production
 
 # Use `eventlet` with `flask_socketio`
-CMD ["python3", "socket.py"]
+CMD ["python3", "socket_server.py"]
