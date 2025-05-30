@@ -3,10 +3,23 @@ server {
     listen [::]:80;
     server_name flask.opencodingsociety.com;
 
+    # Proxy Socket.IO connections to 8500
+    location /socket.io/ {
+        proxy_pass http://localhost:8500;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Proxy all other traffic to Flask app on 8587
     location / {
         proxy_pass http://localhost:8587;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
 
-        # Preflighted requests
+        # Preflight CORS headers for browser OPTIONS requests
         if ($request_method = OPTIONS) {
             add_header "Access-Control-Allow-Credentials" "true" always;
             add_header "Access-Control-Allow-Origin"  "https://pages.opencodingsociety.com" always;
@@ -15,6 +28,5 @@ server {
             add_header "Access-Control-Allow-Headers" "Authorization, Origin, X-Origin, X-Requested-With, Content-Type, Accept" always;
             return 204;
         }
-
     }
 }
