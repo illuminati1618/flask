@@ -59,7 +59,7 @@ class GitHubUser(Resource):
         end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
         start_date_iso = start_date.strftime('%Y-%m-%dT%H:%M:%SZ')
         end_date_iso = end_date.strftime('%Y-%m-%dT%H:%M:%SZ')
-        
+
         total_commit_query = """
         query($login: String!, $from: DateTime!, $to: DateTime!) {
             user(login: $login) {
@@ -74,8 +74,9 @@ class GitHubUser(Resource):
             "from": start_date_iso,
             "to": end_date_iso
         }
-        
-        total_commit_data, total_commit_status_code = self.make_github_graphql_request(total_commit_query, total_commit_variables)
+
+        total_commit_data, total_commit_status_code = self.make_github_graphql_request(
+            total_commit_query, total_commit_variables)
         total_commits = 0
         if total_commit_status_code == 200:
             total_commits = total_commit_data['data']['user']['contributionsCollection']['totalCommitContributions']
@@ -90,8 +91,14 @@ class GitHubUser(Resource):
                         }
                         contributions(first: 100) {
                             nodes {
-                                commitCount
                                 occurredAt
+                                commit {
+                                    additions
+                                    deletions
+                                    committedDate
+                                    messageHeadline
+                                    url
+                                }
                             }
                         }
                     }
@@ -104,14 +111,38 @@ class GitHubUser(Resource):
             "from": start_date_iso,
             "to": end_date_iso
         }
-        
-        detailed_commit_data, detailed_commit_status_code = self.make_github_graphql_request(detailed_commit_query, detailed_commit_variables)
+
+        detailed_commit_data, detailed_commit_status_code = self.make_github_graphql_request(
+            detailed_commit_query, detailed_commit_variables)
+
         details_of_commits = []
+        total_additions = 0
+        total_deletions = 0
+
         if detailed_commit_status_code == 200:
-            details_of_commits = detailed_commit_data['data']['user']['contributionsCollection']['commitContributionsByRepository']
-        
+            repos = detailed_commit_data['data']['user']['contributionsCollection']['commitContributionsByRepository']
+            for repo in repos:
+                repo_name = repo['repository']['nameWithOwner']
+                for commit in repo['contributions']['nodes']:
+                    commit_info = commit.get('commit')
+                    if commit_info:
+                        additions = commit_info.get('additions', 0)
+                        deletions = commit_info.get('deletions', 0)
+                        total_additions += additions
+                        total_deletions += deletions
+                        details_of_commits.append({
+                            "repository": repo_name,
+                            "date": commit_info.get('committedDate'),
+                            "message": commit_info.get('messageHeadline'),
+                            "additions": additions,
+                            "deletions": deletions,
+                            "url": commit_info.get('url')
+                        })
+
         return {
             'total_commit_contributions': total_commits,
+            'total_lines_added': total_additions,
+            'total_lines_deleted': total_deletions,
             'details_of_commits': details_of_commits
         }, 200
 

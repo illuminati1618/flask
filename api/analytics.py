@@ -94,7 +94,6 @@ class UserCommits(Resource):
             return jsonify(response[0])
         except Exception as e:
             return {'message': str(e)}, 500
-        
 class UserPrs(Resource):
     @token_required()
     def get(self):
