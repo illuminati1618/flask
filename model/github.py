@@ -60,84 +60,91 @@ class GitHubUser(Resource):
         start_date_iso = start_date.strftime('%Y-%m-%dT%H:%M:%SZ')
         end_date_iso = end_date.strftime('%Y-%m-%dT%H:%M:%SZ')
 
-        total_commit_query = """
-        query($login: String!, $from: DateTime!, $to: DateTime!) {
-            user(login: $login) {
-                contributionsCollection(from: $from, to: $to) {
-                    totalCommitContributions
-                }
-            }
-        }
-        """
-        total_commit_variables = {
-            "login": uid,
-            "from": start_date_iso,
-            "to": end_date_iso
-        }
-
-        total_commit_data, total_commit_status_code = self.make_github_graphql_request(
-            total_commit_query, total_commit_variables)
-        total_commits = 0
-        if total_commit_status_code == 200:
-            total_commits = total_commit_data['data']['user']['contributionsCollection']['totalCommitContributions']
-
-        detailed_commit_query = """
-        query($login: String!, $from: DateTime!, $to: DateTime!) {
-            user(login: $login) {
-                contributionsCollection(from: $from, to: $to) {
-                    commitContributionsByRepository {
-                        repository {
-                            nameWithOwner
-                        }
-                        contributions(first: 100) {
-                            nodes {
-                                occurredAt
-                                commit {
-                                    additions
-                                    deletions
-                                    committedDate
-                                    messageHeadline
-                                    url
-                                }
+        repo_query = """
+        query($login: String!, $since: GitTimestamp!, $until: GitTimestamp!) {
+        user(login: $login) {
+            repositoriesContributedTo(first: 50, contributionTypes: [COMMIT], includeUserRepositories: true) {
+            nodes {
+                name
+                owner { login }
+                defaultBranchRef {
+                name
+                target {
+                    ... on Commit {
+                    history(first: 100, since: $since, until: $until) {
+                        nodes {
+                        committedDate
+                        messageHeadline
+                        additions
+                        deletions
+                        url
+                        author {
+                            user {
+                            login
                             }
                         }
+                        }
+                    }
                     }
                 }
+                }
+            }
             }
         }
+        }
         """
-        detailed_commit_variables = {
+
+        variables = {
             "login": uid,
-            "from": start_date_iso,
-            "to": end_date_iso
+            "since": start_date_iso,
+            "until": end_date_iso
         }
 
-        detailed_commit_data, detailed_commit_status_code = self.make_github_graphql_request(
-            detailed_commit_query, detailed_commit_variables)
+        response_data, status_code = self.make_github_graphql_request(repo_query, variables)
+        
+        if status_code != 200 or not response_data:
+            return {
+                'error': 'Failed to fetch data from GitHub'
+            }, status_code
 
         details_of_commits = []
         total_additions = 0
         total_deletions = 0
+        total_commits = 0
 
-        if detailed_commit_status_code == 200:
-            repos = detailed_commit_data['data']['user']['contributionsCollection']['commitContributionsByRepository']
+        try:
+            repos = response_data['data']['user']['repositoriesContributedTo']['nodes']
             for repo in repos:
-                repo_name = repo['repository']['nameWithOwner']
-                for commit in repo['contributions']['nodes']:
-                    commit_info = commit.get('commit')
-                    if commit_info:
-                        additions = commit_info.get('additions', 0)
-                        deletions = commit_info.get('deletions', 0)
-                        total_additions += additions
-                        total_deletions += deletions
-                        details_of_commits.append({
-                            "repository": repo_name,
-                            "date": commit_info.get('committedDate'),
-                            "message": commit_info.get('messageHeadline'),
-                            "additions": additions,
-                            "deletions": deletions,
-                            "url": commit_info.get('url')
-                        })
+                repo_name = f"{repo['owner']['login']}/{repo['name']}"
+                branch = repo.get('defaultBranchRef')
+                if not branch or not branch.get('target'):
+                    continue
+
+                history = branch['target'].get('history', {}).get('nodes', [])
+                for commit in history:
+                    author_info = commit.get('author', {}).get('user')
+                    if not author_info or author_info.get('login') != uid:
+                        continue  # Skip commits not by the specified user
+
+                    additions = commit.get('additions', 0)
+                    deletions = commit.get('deletions', 0)
+                    total_additions += additions
+                    total_deletions += deletions
+                    total_commits += 1
+
+                    details_of_commits.append({
+                        "repository": repo_name,
+                        "date": commit.get('committedDate'),
+                        "message": commit.get('messageHeadline'),
+                        "additions": additions,
+                        "deletions": deletions,
+                        "url": commit.get('url')
+                    })
+
+        except Exception as e:
+            return {
+                'error': f'Error processing response: {str(e)}'
+            }, 500
 
         return {
             'total_commit_contributions': total_commits,
