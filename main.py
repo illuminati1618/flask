@@ -26,6 +26,9 @@ from model.user import Section;
 from model.github import GitHubUser
 from api.analytics import get_date_range
 from api.grade_api import grade_api
+from api.study import study_api
+from model.study import Study, initStudies
+
 
 # server only Views
 
@@ -50,6 +53,7 @@ app.register_blueprint(stock_api)
 app.register_blueprint(analytics_api)
 app.register_blueprint(student_api)
 app.register_blueprint(grade_api)
+app.register_blueprint(study_api)
 
 
 # Tell Flask-Login the view function name of your login route
@@ -88,6 +92,10 @@ def login():
         else:
             error = 'Invalid username or password.'
     return render_template("login.html", error=error, next=next_page)
+
+@app.route('/studytracker')  # route for the study tracker page
+def studytracker():
+    return render_template("studytracker.html")
     
 @app.route('/logout')
 def logout():
