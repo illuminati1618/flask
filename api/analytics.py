@@ -94,7 +94,6 @@ class UserCommits(Resource):
             return jsonify(response[0])
         except Exception as e:
             return {'message': str(e)}, 500
-        
 class UserPrs(Resource):
     @token_required()
     def get(self):
@@ -209,10 +208,11 @@ class GitHubOrgRepos(Resource):
             return {'message': str(e)}, 500
         
 class AdminUserIssues(Resource):
-    def post(self, uid):
+    @token_required()
+    def get(self, uid):
         try:
             # Check if the current user is an Admin
-            if current_user.role != 'Admin':
+            if g.current_user.role != 'Admin':
                 return {'message': 'Access denied: Admins only.'}, 403
 
             # Fetch the request body to extract date range (if any)
@@ -221,11 +221,11 @@ class AdminUserIssues(Resource):
             except Exception as e:
                 body = {}
 
+            # Determine date range from body or use default trimester logic
             start_date, end_date = get_date_range(body)
 
             # Fetch the user based on uid
             user = User.query.filter_by(_uid=uid).first()
-
             if not user:
                 return {'message': 'User not found'}, 404
 
@@ -237,6 +237,7 @@ class AdminUserIssues(Resource):
             if response is None or len(response) < 2:
                 return {'message': 'Error fetching issues for this user'}, 500
 
+            # Return the user's UID and issue stats
             return jsonify({
                 'uid': user.uid,
                 'issues': response[0]
@@ -246,44 +247,44 @@ class AdminUserIssues(Resource):
             return {'message': str(e)}, 500
 
 
-
 class AdminUserCommits(Resource):
-    def post(self, uid):
+    @token_required()
+    def get(self, uid):
         try:
-            # Ensure the current user is an Admin
-            if current_user.role != 'Admin':
+            # Check if the current user has 'Admin' role; if not, deny access with a 403 status
+            if g.current_user.role != 'Admin':
                 return {'message': 'Access denied: Admins only.'}, 403
 
-            # Parse request body to extract date range (if any)
+            # Attempt to parse the request's JSON body; if the request does not contain valid JSON, assign an empty dictionary
             try:
                 body = request.get_json()
             except Exception as e:
                 body = {}
 
-            # Extract the start and end date
+            # Extract the start and end date from the parsed body; fallback to default values if not provided
             start_date, end_date = get_date_range(body)
 
-            # Fetch the user based on the provided UID
+            # Query the database to find the user by the provided unique user ID (uid)
             user = User.query.filter_by(_uid=uid).first()
 
+            # If the user is not found, return a 404 Not Found error message
             if not user:
                 return {'message': 'User not found'}, 404
 
-            # Fetch commit data for the user from GitHub
             github_user_resource = GitHubUser()
+            
+            # Retrieve the commit statistics for the given user, filtered by the date range
             response = github_user_resource.get_commit_stats(user.uid, start_date, end_date)
-
-            # If the response is invalid, handle it
+            
             if response is None or len(response) < 2:
                 return {'message': 'Error fetching commits for this user'}, 500
 
             return jsonify({
                 'uid': user.uid,
-                'commits': response[0]
+                'commits': response[0]  # Assuming the first item in response contains the commit data
             })
 
         except Exception as e:
-            # Handle all other exceptions
             return {'message': str(e)}, 500
 
     def check_rate_limit(self, response):
@@ -307,12 +308,10 @@ class AdminUserCommits(Resource):
                 response = github_user_resource.get_commit_stats(user_uid, start_date, end_date)
 
                 if response.status_code == 500:
-                    # Server error - retry after some delay
                     print(f"Attempt {attempt + 1}: Server error, retrying...")
                     time.sleep(5 * (2 ** attempt))  # Exponential backoff
                 elif response.status_code == 403:
                     if self.check_rate_limit(response):
-                        # Retry after rate limit reset
                         return self.retry_request(user_uid, start_date, end_date)
                 else:
                     return response.json()  # Successfully processed the request
@@ -320,7 +319,6 @@ class AdminUserCommits(Resource):
                 print(f"Error occurred: {e}")
             attempt += 1
         return None  # If retries are exhausted
-
 
 
 api.add_resource(GitHubUserAPI, '/github/user')
