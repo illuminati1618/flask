@@ -25,6 +25,8 @@ from model.user import User, initUsers
 from model.user import Section;
 from model.github import GitHubUser
 from api.analytics import get_date_range
+from api.grade_api import grade_api
+
 # server only Views
 
 import os
@@ -47,6 +49,8 @@ app.register_blueprint(stock_api)
 
 app.register_blueprint(analytics_api)
 app.register_blueprint(student_api)
+app.register_blueprint(grade_api)
+
 
 # Tell Flask-Login the view function name of your login route
 login_manager.login_view = "login"
