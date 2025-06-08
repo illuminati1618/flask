@@ -22,10 +22,8 @@ cors = CORS(app, supports_credentials=True, origins=[
     'http://127.0.0.1:4500',
     'http://localhost:4600', # add 4600 for https://open-coding-society.github.io locally
     'http://127.0.0.1:4600', 
-    'https://open-coding-society.github.io' # for https://open-coding-society.github.io on deployed
+    'https://open-coding-society.github.io', # for https://open-coding-society.github.io on deployed
     'https://pages.opencodingsociety.com', # update to your new domain
-    'https://hypernova101.github.io' #temporary until adi merges student 2026 to open coding society
-    'https://adik1025.github.io'  #temporary until adi merges student 2026 to open coding society
 ])
 
 # Admin Defaults
