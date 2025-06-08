@@ -59,12 +59,19 @@ pip install -r requirements.txt
 
   - Make a local `.env` file in root of project to contain your secret passwords
 
-  ```shell
-  # User Defaults
-  ADMIN_USER='toby'
+  ```shella
+  # Reset Password
+  DEFAULT_PASSWORD='123Qwerty!'
+  # Admin user defaults
+  ADMIN_USER='Thomas Edison'
+  ADMIN_UID='toby'
   ADMIN_PASSWORD='123Toby!'
-  DEFAULT_USER='hop'
-  DEFAULT_PASSWORD='123Hop!'
+  ADMIN_PFP='toby.png'
+  # Create a default user for the system
+  DEFAULT_USER='Grace Hopper'
+  DEFAULT_UID='hop'
+  DEFAULT_USER_PASSWORD='123Hop!'
+  DEFAULT_USER_PFP='hop.png'
   ```
 
   - Make the database and init data.

@@ -239,11 +239,15 @@ class User(db.Model, UserMixin):
     def password(self):
         return self._password[0:10] + "..."  # because of security only show 1st characters
 
-            
     # set password, this is conventional setter with business logic
     def set_password(self, password):
-        """Create a hashed password."""
-        self._password = generate_password_hash(password, "pbkdf2:sha256", salt_length=10)
+        """Set password: hash if not already hashed, else set directly."""
+        if password and password.startswith("pbkdf2:sha256:"):
+            # Already hashed, set directly
+            self._password = password
+        else:
+            # Not hashed, hash it
+            self._password = generate_password_hash(password, "pbkdf2:sha256", salt_length=10)            
 
     # check password parameter versus stored/encrypted password
     def is_password(self, password):
@@ -323,6 +327,7 @@ class User(db.Model, UserMixin):
             "kasm_server_needed": self.kasm_server_needed,
             "grade_data": self._grade_data,
             "ap_exam": self._ap_exam
+            "password": self._password,  # Only for internal use, not for API
         }
         sections = self.read_sections()
         data.update(sections)
@@ -608,9 +613,9 @@ def initUsers():
             'last_updated': None
         }
 
-        u1 = User(name='Thomas Edison', uid=app.config['ADMIN_USER'], password=app.config['ADMIN_PASSWORD'], pfp='toby.png', kasm_server_needed=True, role="Admin", grade_data=default_grade_data, ap_exam=default_ap_exam)
-        u2 = User(name='Grace Hopper', uid=app.config['DEFAULT_USER'], password=app.config['DEFAULT_PASSWORD'], pfp='hop.png', kasm_server_needed=False, grade_data=default_grade_data, ap_exam=default_ap_exam)
-        u3 = User(name='Nicholas Tesla', uid='niko', password='123niko', pfp='niko.png', kasm_server_needed=False, grade_data=default_grade_data, ap_exam=default_ap_exam)
+        u1 = User(name=app.config['ADMIN_USER'], uid=app.config['ADMIN_UID'], password=app.config['ADMIN_PASSWORD'], pfp=app.config['ADMIN_PFP'], kasm_server_needed=True, role="Admin")
+        u2 = User(name=app.config['DEFAULT_USER'], uid=app.config['DEFAULT_UID'], password=app.config['DEFAULT_USER_PASSWORD'], pfp=app.config['DEFAULT_USER_PFP'])
+        u3 = User(name='Nicholas Tesla', uid='niko', pfp='niko.png')
         users = [u1, u2, u3]
         
         for user in users:
