@@ -326,7 +326,7 @@ class User(db.Model, UserMixin):
             "pfp": self._pfp,
             "kasm_server_needed": self.kasm_server_needed,
             "grade_data": self._grade_data,
-            "ap_exam": self._ap_exam
+            "ap_exam": self._ap_exam,
             "password": self._password,  # Only for internal use, not for API
         }
         sections = self.read_sections()
