@@ -25,11 +25,19 @@ cors = CORS(app, supports_credentials=True, origins=[
     'https://adik1025.github.io'  #temporary until adi merges student 2026 to open coding society
 ])
 
-# System Defaults
-app.config['ADMIN_USER'] = os.environ.get('ADMIN_USER') or 'admin'
+# Admin Defaults
+app.config['ADMIN_USER'] = os.environ.get('ADMIN_USER') or 'Admin Name'
+app.config['ADMIN_UID'] = os.environ.get('ADMIN_UID') or 'admin'
 app.config['ADMIN_PASSWORD'] = os.environ.get('ADMIN_PASSWORD') or os.environ.get('DEFAULT_PASSWORD') or 'password'
-app.config['DEFAULT_USER'] = os.environ.get('DEFAULT_USER') or 'user'
+app.config['ADMIN_PFP'] = os.environ.get('ADMIN_PFP') or 'default.png'
+# Default User Defaults
+app.config['DEFAULT_USER'] = os.environ.get('DEFAULT_USER') or 'User Name'
+app.config['DEFAULT_UID'] = os.environ.get('DEFAULT_UID') or 'user'
+app.config['DEFAULT_USER_PASSWORD'] = os.environ.get('DEFAULT_USER_PASSWORD') or os.environ.get('DEFAULT_PASSWORD') or 'password'
+app.config['DEFAULT_USER_PFP'] = os.environ.get('DEFAULT_USER_PFP') or 'default.png'
+# Reset Defaults
 app.config['DEFAULT_PASSWORD'] = os.environ.get('DEFAULT_PASSWORD') or 'password'
+app.config['DEFAULT_PFP'] = os.environ.get('DEFAULT_PFP') or 'default.png'
 
 # Browser settings
 SECRET_KEY = os.environ.get('SECRET_KEY') or 'SECRET_KEY' # secret key for session management

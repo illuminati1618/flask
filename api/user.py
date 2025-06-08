@@ -79,7 +79,6 @@ class UserAPI:
             ''' Avoid garbage in, error checking '''
             # validate name
             name = body.get('name')
-            password = body.get('password')
             if name is None or len(name) < 2:
                 return {'message': f'Name is missing, or is less than 2 characters'}, 400
             
@@ -95,8 +94,14 @@ class UserAPI:
             
             ''' User object creation '''
             #1: Setup minimal User object using __init__ method
-            user_obj = User(name=name, uid=uid)
-            
+            password = body.get('password')
+            if password is not None:
+                if len(password) < 8 and not password.startswith("pbkdf2:sha256:"):
+                    return {'message': 'Password must be at least 8 characters'}, 400
+                user_obj = User(name=name, uid=uid, password=password)
+            else:
+                user_obj = User(name=name, uid=uid)
+                
             #2: Save the User object to the database using custom create method
             user = user_obj.create(body) # pass the body elements to be saved in the database
             if not user: # failure returns error message
