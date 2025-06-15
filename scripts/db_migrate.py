@@ -38,10 +38,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from main import app, db, initUsers
 
 # Locations and credentials 
-AUTH_URL = "https://flask2025.nighthawkcodingsociety.com/api/authenticate"
-DATA_URL = "https://flask2025.nighthawkcodingsociety.com/api/user"
-UID = app.config['DEFAULT_USER'] 
-PASSWORD = app.config['DEFAULT_PASSWORD']
+AUTH_URL = "https://flask.opencodingsociety.com/api/authenticate"
+DATA_URL = "https://flask.opencodingsociety.com/api/user"
+UID = app.config['DEFAULT_UID'] 
+PASSWORD = app.config['DEFAULT_USER_PASSWORD']
 
 PERSISTENCE_PREFIX = "instance"
 JSON_DATA = PERSISTENCE_PREFIX + "/data.json"
