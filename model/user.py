@@ -284,22 +284,26 @@ class User(db.Model, UserMixin):
     @property
     def grade_data(self):
         """Gets the user's grade data."""
+        if self._grade_data is None:
+            return {}
         return self._grade_data
 
     @grade_data.setter
     def grade_data(self, grade_data):
         """Sets the user's grade data."""
-        self._grade_data = grade_data
+        self._grade_data = grade_data if grade_data is not None else {}
 
     @property
     def ap_exam(self):
         """Gets the user's AP exam data."""
+        if self._ap_exam is None:
+            return {}
         return self._ap_exam
 
     @ap_exam.setter
     def ap_exam(self, ap_exam):
         """Sets the user's AP exam data."""
-        self._ap_exam = ap_exam
+        self._ap_exam = ap_exam if ap_exam is not None else {}
 
     # CRUD create/add a new record to the table
     # returns self or None on error
@@ -322,11 +326,11 @@ class User(db.Model, UserMixin):
             "uid": self.uid,
             "name": self.name,
             "email": self.email,
-            "role": self._role,
-            "pfp": self._pfp,
+            "role": self.role,
+            "pfp": self.pfp,
             "kasm_server_needed": self.kasm_server_needed,
-            "grade_data": self._grade_data,
-            "ap_exam": self._ap_exam,
+            "grade_data": self.grade_data,
+            "ap_exam": self.ap_exam,
             "password": self._password,  # Only for internal use, not for API
         }
         sections = self.read_sections()
