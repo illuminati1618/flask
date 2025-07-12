@@ -138,6 +138,7 @@ class User(db.Model, UserMixin):
         sections (Relationship): A many-to-many relationship between users and sections, allowing users to be associated with multiple sections.
         _grade_data (Column): A JSON object representing the user's grade data.
         _ap_exam (Column): A JSON object representing the user's AP exam data.
+        _school (Column): A string representing the user's school, defaults to "Unknown".
     """
     __tablename__ = 'users'
 
@@ -151,7 +152,8 @@ class User(db.Model, UserMixin):
     kasm_server_needed = db.Column(db.Boolean, default=False)
     _grade_data = db.Column(db.JSON, unique=False, nullable=True)
     _ap_exam = db.Column(db.JSON, unique=False, nullable=True)
-   
+    _school = db.Column(db.String(255), default="Unknown", nullable=True)
+
     # Define many-to-many relationship with Section model through UserSection table 
     # Overlaps setting avoids cicular dependencies with UserSection class
     sections = db.relationship('Section', secondary=UserSection.__table__, lazy='subquery',
@@ -160,7 +162,7 @@ class User(db.Model, UserMixin):
     # Define one-to-one relationship with StockUser model
     stock_user = db.relationship("StockUser", backref=db.backref("users", cascade="all"), lazy=True, uselist=False)
 
-    def __init__(self, name, uid, password=app.config["DEFAULT_PASSWORD"], kasm_server_needed=False, role="User", pfp='', grade_data=None, ap_exam=None):
+    def __init__(self, name, uid, password=app.config["DEFAULT_PASSWORD"], kasm_server_needed=False, role="User", pfp='', grade_data=None, ap_exam=None, school="Unknown"):
         self._name = name
         self._uid = uid
         self._email = "?"
@@ -170,6 +172,7 @@ class User(db.Model, UserMixin):
         self._pfp = pfp
         self._grade_data = grade_data if grade_data else {}
         self._ap_exam = ap_exam if ap_exam else {}
+        self._school = school
 
     # UserMixin/Flask-Login requires a get_id method to return the id as a string
     def get_id(self):
@@ -305,6 +308,14 @@ class User(db.Model, UserMixin):
         """Sets the user's AP exam data."""
         self._ap_exam = ap_exam if ap_exam is not None else {}
 
+    @property
+    def school(self):
+        return self._school
+
+    @school.setter
+    def school(self, school):
+        self._school = school
+
     # CRUD create/add a new record to the table
     # returns self or None on error
     def create(self, inputs=None):
@@ -332,6 +343,7 @@ class User(db.Model, UserMixin):
             "grade_data": self.grade_data,
             "ap_exam": self.ap_exam,
             "password": self._password,  # Only for internal use, not for API
+            "school": self.school
         }
         sections = self.read_sections()
         data.update(sections)
@@ -350,7 +362,7 @@ class User(db.Model, UserMixin):
         kasm_server_needed = inputs.get("kasm_server_needed", None)
         grade_data = inputs.get("grade_data", None)
         ap_exam = inputs.get("ap_exam", None)
-
+        school = inputs.get("school", None)
         # States before update
         old_uid = self.uid
         old_kasm_server_needed = self.kasm_server_needed
@@ -370,6 +382,8 @@ class User(db.Model, UserMixin):
             self.grade_data = grade_data
         if ap_exam is not None:
             self.ap_exam = ap_exam
+        if school is not None:
+            self.school = school
 
         # Check this on each update
         self.set_email()
