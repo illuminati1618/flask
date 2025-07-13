@@ -273,6 +273,9 @@ class User(db.Model, UserMixin):
 
     def is_admin(self):
         return self._role == "Admin"
+
+    def is_teacher(self):
+        return self._role == "Teacher"
     
     # getter method for profile picture
     @property
