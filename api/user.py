@@ -482,6 +482,59 @@ class UserAPI:
             
             return jsonify({'message': 'AP exam data updated successfully', 'uid': user.uid, 'ap_exam': user.ap_exam})
 
+    class _School(Resource):
+        """
+        School data API operations
+        """
+        
+        @token_required()
+        def get(self):
+            """
+            Get the school data for a user.
+            """
+            current_user = g.current_user
+            
+            # If request includes a UID parameter and user is admin, get that user's school data
+            uid = request.args.get('uid')
+            if current_user.role == 'Admin' and uid:
+                user = User.query.filter_by(_uid=uid).first()
+                if not user:
+                    return {'message': f'User {uid} not found'}, 404
+            else:
+                user = current_user  # Get the current user's school data
+                
+            return jsonify({'uid': user.uid, 'school': user.school})
+        
+        @token_required()
+        def post(self):
+            """
+            Add or update school data for a user.
+            """
+            current_user = g.current_user
+            body = request.get_json()
+            
+            # Determine which user's school data to update
+            uid = body.get('uid')
+            if current_user.role == 'Admin' and uid:
+                user = User.query.filter_by(_uid=uid).first()
+                if not user:
+                    return {'message': f'User {uid} not found'}, 404
+            else:
+                # Non-admins can only update their own school data
+                if uid and uid != current_user.uid and current_user.role != 'Admin':
+                    return {'message': 'Permission denied: You can only update your own school data'}, 403
+                user = current_user
+            
+            # Get the school data from the request
+            school = body.get('school')
+            if not school:
+                return {'message': 'School data is missing'}, 400
+                
+            # Update the user's school data
+            user.update({'school': school})
+            
+            return jsonify({'message': 'School data updated successfully', 'uid': user.uid, 'school': user.school})
+
     # building RESTapi endpoint
     api.add_resource(_ID, '/id')
     api.add_resource(_BULK, '/users')
@@ -490,4 +543,4 @@ class UserAPI:
     api.add_resource(_Security, '/authenticate')
     api.add_resource(_GradeData, '/grade_data')
     api.add_resource(_APExam, '/apexam')
-
+    api.add_resource(_School, '/school')
