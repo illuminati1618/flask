@@ -76,6 +76,9 @@ class UserAPI:
             # Read data for json body
             body = request.get_json()
             
+            # Debug logging
+            #print(f"Received signup request with body: {body}")
+            
             ''' Avoid garbage in, error checking '''
             # validate name
             name = body.get('name')
@@ -101,14 +104,51 @@ class UserAPI:
                 user_obj = User(name=name, uid=uid, password=password)
             else:
                 user_obj = User(name=name, uid=uid)
-                
-            #2: Save the User object to the database using custom create method
-            user = user_obj.create(body) # pass the body elements to be saved in the database
-            if not user: # failure returns error message
-                return {'message': f'Processed {name}, either a format error or User ID {uid} is duplicate'}, 400
             
-            # return response, the created user details as a JSON object
-            return jsonify(user.read())
+            # Handle additional fields that frontend sends
+            # Create a cleaned body with only the fields User model expects
+            cleaned_body = {
+                'name': name,
+                'uid': uid,
+                'password': password,
+                'email': body.get('email'),
+            }
+            
+            # Add optional fields if they exist
+            if body.get('sid'):
+                cleaned_body['sid'] = body.get('sid')
+            if body.get('school'):
+                cleaned_body['school'] = body.get('school')
+            if body.get('kasm_server_needed') is not None:
+                cleaned_body['kasm_server_needed'] = body.get('kasm_server_needed')
+            
+            # Remove None values
+            cleaned_body = {k: v for k, v in cleaned_body.items() if v is not None}
+            
+            # print(f"Cleaned body for user creation: {cleaned_body}")
+
+            #2: Save the User object to the database using custom create method
+            try:
+                user = user_obj.create(cleaned_body) # pass the cleaned body elements to be saved in the database
+                #print(f"Create method returned: {user}")
+                #print(f"User type: {type(user)}")
+                
+                if not user:
+                    # Check if user was actually created in database despite create() returning None
+                    db_user = User.query.filter_by(_uid=uid).first()
+                    if db_user:
+                        print(f"User exists in DB but create returned None: {db_user.uid}")
+                        return jsonify(db_user.read())  # Return the user anyway
+                    else:
+                        return {'message': f'Processed {name}, either a format error or User ID {uid} is duplicate'}, 400
+                
+                print(f"Successfully created user: {user.uid}")
+                # return response, the created user details as a JSON object
+                return jsonify(user.read())
+                
+            except Exception as e:
+                print(f"Error creating user: {e}")
+                return {'message': f'Error creating user: {str(e)}'}, 500
 
         @token_required()
         def get(self):
