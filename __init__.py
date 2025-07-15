@@ -22,6 +22,8 @@ cors = CORS(app, supports_credentials=True, origins=[
     'http://127.0.0.1:4500',
     'http://localhost:4600', # add 4600 for https://open-coding-society.github.io locally
     'http://127.0.0.1:4600', 
+    'http://localhost:4000', # add 4000 for pages locally
+    'http://127.0.0.1:4000', 
     'https://open-coding-society.github.io', # for https://open-coding-society.github.io on deployed
     'https://pages.opencodingsociety.com', # update to your new domain
 ])
