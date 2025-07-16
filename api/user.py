@@ -137,17 +137,17 @@ class UserAPI:
                     # Check if user was actually created in database despite create() returning None
                     db_user = User.query.filter_by(_uid=uid).first()
                     if db_user:
-                        print(f"User exists in DB but create returned None: {db_user.uid}")
+                        #print(f"User exists in DB but create returned None: {db_user.uid}")
                         return jsonify(db_user.read())  # Return the user anyway
                     else:
                         return {'message': f'Processed {name}, either a format error or User ID {uid} is duplicate'}, 400
                 
-                print(f"Successfully created user: {user.uid}")
+                #print(f"Successfully created user: {user.uid}")
                 # return response, the created user details as a JSON object
                 return jsonify(user.read())
                 
             except Exception as e:
-                print(f"Error creating user: {e}")
+                #print(f"Error creating user: {e}")
                 return {'message': f'Error creating user: {str(e)}'}, 500
 
         @token_required()
