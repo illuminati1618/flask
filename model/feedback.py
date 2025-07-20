@@ -7,12 +7,14 @@ class Feedback(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
     body = db.Column(db.Text, nullable=False)
+    type = db.Column(db.String(64), default="Other")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     github_issue_url = db.Column(db.String(512), nullable=True)
 
-    def __init__(self, title, body):
+    def __init__(self, title, body, type="Other"):
         self.title = title
         self.body = body
+        self.type = type
 
     def create(self):
         db.session.add(self)
@@ -24,6 +26,7 @@ class Feedback(db.Model):
             "id": self.id,
             "title": self.title,
             "body": self.body,
+            "type": self.type,
             "created_at": self.created_at,
             "github_issue_url": self.github_issue_url
         }

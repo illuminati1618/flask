@@ -20,18 +20,25 @@ class FeedbackAPI:
 
             if not title or not body:
                 return {"message": "Title and body are required."}, 400
+            
+            type = data.get('type', 'Other')  # default to 'Other' if not provided
 
-            feedback = Feedback(title, body).create()
+            # Ensure type is a valid GitHub label
+            valid_types = ['Bug', 'Feature Request', 'Inquiry', 'Other']
+            label = type if type in valid_types else 'Other'
+
+            feedback = Feedback(title, body, type).create()
 
             # Attempt to create GitHub issue
             headers = {
                 "Authorization": f"Bearer {GITHUB_TOKEN}",
                 "Accept": "application/vnd.github+json"
             }
+
             payload = {
                 "title": f"[User Feedback] {title}",
                 "body": body,
-                "labels": ["feedback"]
+                "labels": ["User Input", label]  # add both base label and type-specific
             }
 
             try:
