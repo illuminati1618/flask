@@ -133,4 +133,15 @@ def remove_student_from_classroom(classroom_id, student_id):
         student.classrooms.remove(classroom_id)
     return jsonify({'message': 'Student removed'})
 
-
+@classroom_api.route('/api/classrooms/<classroom_id>/students/<student_id>/status', methods=['PUT'])
+def update_student_status(classroom_id, student_id):
+    user = get_current_user()
+    classroom = classrooms_db.get(classroom_id)
+    student = users_db.get(student_id)
+    if not classroom or not student:
+        return jsonify({'error': 'Not found'}), 404
+    if user.role not in ['admin', 'teacher'] or (user.role == 'teacher' and classroom.ownerTeacherId != user.id):
+        return jsonify({'error': 'Forbidden'}), 403
+    data = request.json
+    student.status = data.get('status', student.status)
+    return jsonify({'message': 'Student status updated'})
