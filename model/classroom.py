@@ -20,13 +20,12 @@ class Classroom:
         }
 
 class User:
-    def __init__(self, id, name, role, schoolName, status='active', classrooms=None):
+    def __init__(self, id, name, role, schoolName, status='active'):
         self.id = id
         self.name = name
         self.role = role  # 'teacher' or 'student' or 'admin'
         self.schoolName = schoolName
         self.status = status
-        self.classrooms = classrooms or []  # list of classroom IDs
 
     def to_dict(self):
         return {
@@ -34,6 +33,17 @@ class User:
             'name': self.name,
             'role': self.role,
             'schoolName': self.schoolName,
-            'status': self.status,
-            'classrooms': self.classrooms
+            'status': self.status
+        }
+
+# Association table for many-to-many relationship between students and classrooms
+class StudentClassroom:
+    def __init__(self, student_id, classroom_id):
+        self.student_id = student_id
+        self.classroom_id = classroom_id
+
+    def to_dict(self):
+        return {
+            'student_id': self.student_id,
+            'classroom_id': self.classroom_id
         }
