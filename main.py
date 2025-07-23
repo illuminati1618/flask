@@ -21,16 +21,17 @@ from api.stock import stock_api
 from api.analytics import analytics_api
 from api.student import student_api
 from api.groq_api import groq_api
+from api.classroom_api import classroom_api
 
 # database Initialization functions
 from model.user import User, initUsers
 from model.user import Section;
 from model.github import GitHubUser
 from api.analytics import get_date_range
-from api.grade_api import grade_api
+# from api.grade_api import grade_api
 from api.study import study_api
 from model.study import Study, initStudies
-
+from model.classroom import Classroom
 
 # server only Views
 
@@ -55,8 +56,9 @@ app.register_blueprint(groq_api)
 
 app.register_blueprint(analytics_api)
 app.register_blueprint(student_api)
-app.register_blueprint(grade_api)
+# app.register_blueprint(grade_api)
 app.register_blueprint(study_api)
+app.register_blueprint(classroom_api)
 
 
 # Tell Flask-Login the view function name of your login route
@@ -291,3 +293,5 @@ app.cli.add_command(custom_cli)
 if __name__ == "__main__":
     # change name for testing
     app.run(debug=True, host="0.0.0.0", port="8587")
+    
+
