@@ -1,167 +1,115 @@
-from flask import Blueprint, request, jsonify
-from model.classroom import Classroom, User
+from flask import Blueprint, request, jsonify, g
+from flask_restful import Api, Resource
 from datetime import datetime
-import uuid
+from __init__ import db
+from api.jwt_authorize import token_required
+from model.classroom import Classroom
+from model.user import User  # Import User model for validation
 
-classrooms_db = {}
-users_db = {}
+classroom_api = Blueprint('classroom_api', __name__, url_prefix='/api')
+api = Api(classroom_api)
 
-classroom_api = Blueprint('classroom_api', __name__)
+class ClassroomListAPI(Resource):
+    @token_required()
+    def get(self):
+        current_user = g.current_user
+        if current_user.role == "Admin":
+            classrooms = Classroom.query.all()
+        else:
+            classrooms = Classroom.query.filter_by(school_name=current_user.school).all()
+        return jsonify([c.to_dict() for c in classrooms])
 
-def get_current_user():
-    # Placeholder: Replace with real authentication
-    user_id = request.headers.get('X-User-Id')
-    return users_db.get(user_id)
+    @token_required(["Teacher", "Admin"])
+    def post(self):
+        data = request.get_json()
+        name = data.get("name")
+        if not name:
+            return {"message": "Classroom name is required"}, 400
 
-@classroom_api.route('/api/classrooms', methods=['GET'])
-def list_classrooms():
-    user = get_current_user()
-    if not user:
-        return jsonify({'error': 'Unauthorized'}), 401
-    if user.role == 'admin':
-        return jsonify([c.to_dict() for c in classrooms_db.values()])
-    return jsonify([
-        c.to_dict() for c in classrooms_db.values()
-        if c.schoolName == user.schoolName
-    ])
+        current_user = g.current_user
+        if current_user.role == "Teacher":
+            school_name = current_user.school
+            owner_teacher_id = current_user.id
+        else:  # Admin
+            school_name = data.get("school_name")
+            owner_teacher_id = data.get("owner_teacher_id")
+            if not school_name or not owner_teacher_id:
+                return {"message": "school_name and owner_teacher_id required for Admin"}, 400
 
-@classroom_api.route('/api/classrooms', methods=['POST'])
-def create_classroom():
-    user = get_current_user()
-    if not user or user.role not in ['teacher', 'admin']:
-        return jsonify({'error': 'Forbidden'}), 403
-    data = request.json
-    classroom_id = str(uuid.uuid4())
-    classroom = Classroom(
-        id=classroom_id,
-        name=data['name'],
-        schoolName=user.schoolName if user.role == 'teacher' else data.get('schoolName'),
-        ownerTeacherId=user.id if user.role == 'teacher' else data.get('ownerTeacherId'),
-        status='active',
-        createdAt=datetime.utcnow()
-    )
-    classrooms_db[classroom_id] = classroom
-    return jsonify(classroom.to_dict()), 201
+            # Optional validation: ensure owner_teacher_id belongs to a teacher
+            owner = User.query.get(owner_teacher_id)
+            if not owner or owner.role != "Teacher":
+                return {"message": "owner_teacher_id must belong to a teacher"}, 400
 
-@classroom_api.route('/api/classrooms/<classroom_id>', methods=['GET'])
-def get_classroom(classroom_id):
-    user = get_current_user()
-    classroom = classrooms_db.get(classroom_id)
-    if not classroom:
-        return jsonify({'error': 'Not found'}), 404
-    if user.role == 'admin' or (user.role == 'teacher' and classroom.ownerTeacherId == user.id):
+        classroom = Classroom(
+            name=name,
+            school_name=school_name,
+            owner_teacher_id=owner_teacher_id,
+            status="active"
+            # created_at is automatically set in model, no need to pass here
+        )
+        classroom.create()
+        return jsonify(classroom.to_dict()), 201
+
+class ClassroomDetailAPI(Resource):
+    @token_required()
+    def get(self, id):
+        classroom = Classroom.query.get(id)
+        if not classroom:
+            return {"message": "Classroom not found"}, 404
+
+        current_user = g.current_user
+        if current_user.role != "Admin" and classroom.school_name != current_user.school:
+            return {"message": "Forbidden"}, 403
+
         return jsonify(classroom.to_dict())
-    if classroom.schoolName == user.schoolName:
+
+    @token_required(["Teacher", "Admin", "User"])
+    def put(self, id):
+        print("Incoming Headers:", request.headers)
+        classroom = Classroom.query.get(id)
+        if not classroom:
+            return {"message": "Classroom not found"}, 404
+
+        current_user = g.current_user
+        if current_user.role == "Teacher" and classroom.owner_teacher_id != current_user.id:
+            return {"message": "Forbidden"}, 403
+
+        data = request.get_json()
+        classroom.update(**data)
         return jsonify(classroom.to_dict())
-    return jsonify({'error': 'Forbidden'}), 403
 
-@classroom_api.route('/api/classrooms/<classroom_id>', methods=['PUT'])
-def update_classroom(classroom_id):
-    user = get_current_user()
-    classroom = classrooms_db.get(classroom_id)
-    if not classroom:
-        return jsonify({'error': 'Not found'}), 404
-    if user.role not in ['admin', 'teacher'] or (user.role == 'teacher' and classroom.ownerTeacherId != user.id):
-        return jsonify({'error': 'Forbidden'}), 403
-    data = request.json
-    classroom.name = data.get('name', classroom.name)
-    classroom.status = data.get('status', classroom.status)
-    classrooms_db[classroom_id] = classroom
-    return jsonify(classroom.to_dict())
+    @token_required(["Teacher", "Admin"])
+    def delete(self, id):
+        classroom = Classroom.query.get(id)
+        if not classroom:
+            return {"message": "Classroom not found"}, 404
 
-@classroom_api.route('/api/classrooms/<classroom_id>', methods=['DELETE'])
-def delete_classroom(classroom_id):
-    user = get_current_user()
-    classroom = classrooms_db.get(classroom_id)
-    if not classroom:
-        return jsonify({'error': 'Not found'}), 404
-    if user.role not in ['admin', 'teacher'] or (user.role == 'teacher' and classroom.ownerTeacherId != user.id):
-        return jsonify({'error': 'Forbidden'}), 403
-    classroom.status = 'archived'
-    return jsonify({'message': 'Classroom archived'})
+        current_user = g.current_user
+        if current_user.role == "Teacher" and classroom.owner_teacher_id != current_user.id:
+            return {"message": "Forbidden"}, 403
 
-@classroom_api.route('/api/classrooms/<classroom_id>/enroll', methods=['POST'])
-def enroll_student(classroom_id):
-    user = get_current_user()
-    classroom = classrooms_db.get(classroom_id)
-    if not classroom or user.role != 'student':
-        return jsonify({'error': 'Forbidden'}), 403
-    if classroom.schoolName != user.schoolName:
-        return jsonify({'error': 'School mismatch'}), 403
-    if classroom_id not in user.classrooms:
-        user.classrooms.append(classroom_id)
-    return jsonify({'message': 'Enrolled'})
+        classroom.status = "archived"
+        db.session.commit()
+        return {"message": f"Classroom {classroom.name} archived"}, 200
 
-@classroom_api.route('/api/classrooms/<classroom_id>/students', methods=['GET'])
-def get_classroom_students(classroom_id):
-    user = get_current_user()
-    classroom = classrooms_db.get(classroom_id)
-    if not classroom:
-        return jsonify({'error': 'Not found'}), 404
-    if user.role not in ['admin', 'teacher'] or (user.role == 'teacher' and classroom.ownerTeacherId != user.id):
-        return jsonify({'error': 'Forbidden'}), 403
-    students = [u.to_dict() for u in users_db.values() if u.role == 'student' and classroom_id in u.classrooms]
-    return jsonify(students)
+class ClassroomStudentsAPI(Resource):
+    @token_required()
+    def get(self, id):
+        # Placeholder for getting students in classroom id
+        return {"message": f"Get students in classroom {id}"}
 
-@classroom_api.route('/api/classrooms/<classroom_id>/students', methods=['POST'])
-def add_student_to_classroom(classroom_id):
-    user = get_current_user()
-    classroom = classrooms_db.get(classroom_id)
-    if not classroom:
-        return jsonify({'error': 'Not found'}), 404
-    if user.role not in ['admin', 'teacher'] or (user.role == 'teacher' and classroom.ownerTeacherId != user.id):
-        return jsonify({'error': 'Forbidden'}), 403
-    data = request.json
-    student_id = data['studentId']
-    student = users_db.get(student_id)
-    if not student or student.role != 'student' or student.schoolName != classroom.schoolName:
-        return jsonify({'error': 'Invalid student'}), 400
-    if classroom_id not in student.classrooms:
-        student.classrooms.append(classroom_id)
-    return jsonify({'message': 'Student added'})
+    @token_required(["Teacher", "Admin"])
+    def post(self, id):
+        # Placeholder for adding a student to classroom id
+        return {"message": f"Add student to classroom {id}"}
 
-@classroom_api.route('/api/classrooms/<classroom_id>/students/<student_id>', methods=['DELETE'])
-def remove_student_from_classroom(classroom_id, student_id):
-    user = get_current_user()
-    classroom = classrooms_db.get(classroom_id)
-    student = users_db.get(student_id)
-    if not classroom or not student:
-        return jsonify({'error': 'Not found'}), 404
-    if user.role not in ['admin', 'teacher'] or (user.role == 'teacher' and classroom.ownerTeacherId != user.id):
-        return jsonify({'error': 'Forbidden'}), 403
-    if classroom_id in student.classrooms:
-        student.classrooms.remove(classroom_id)
-    return jsonify({'message': 'Student removed'})
+    @token_required(["Teacher", "Admin"])
+    def delete(self, id):
+        # Placeholder for removing a student from classroom id
+        return {"message": f"Remove student from classroom {id}"}
 
-@classroom_api.route('/api/classrooms/<classroom_id>/students/<student_id>/status', methods=['PUT'])
-def update_student_status(classroom_id, student_id):
-    user = get_current_user()
-    classroom = classrooms_db.get(classroom_id)
-    student = users_db.get(student_id)
-    if not classroom or not student:
-        return jsonify({'error': 'Not found'}), 404
-    if user.role not in ['admin', 'teacher'] or (user.role == 'teacher' and classroom.ownerTeacherId != user.id):
-        return jsonify({'error': 'Forbidden'}), 403
-    data = request.json
-    student.status = data.get('status', student.status)
-    return jsonify({'message': 'Student status updated'})
-
-@classroom_api.route('/api/classrooms/<classroom_id>/students/<student_id>/status', methods=['PUT'])
-def update_student_status(classroom_id, student_id):
-    user = get_current_user()
-    classroom = classrooms_db.get(classroom_id)
-    student = users_db.get(student_id)
-    if not classroom or not student:
-        return jsonify({'error': 'Not found'}), 404
-    if user.role not in ['admin', 'teacher'] or (user.role == 'teacher' and classroom.ownerTeacherId != user.id):
-        return jsonify({'error': 'Forbidden'}), 403
-    data = request.json
-    student.status = data.get('status', student.status)
-    return jsonify({'message': 'Student status updated'})
-
-@classroom_api.route('/api/admin/classrooms', methods=['GET'])
-def admin_list_classrooms():
-    user = get_current_user()
-    if not user or user.role != 'admin':
-        return jsonify({'error': 'Forbidden'}), 403
-    return jsonify([c.to_dict() for c in classrooms_db.values()])
+# Add resource routing
+api.add_resource(ClassroomListAPI, "/classrooms")
+api.add_resource(ClassroomDetailAPI, "/classrooms/<int:id>")
+api.add_resource(ClassroomStudentsAPI, "/classrooms/<int:id>/students")
