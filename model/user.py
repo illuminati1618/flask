@@ -131,6 +131,8 @@ class User(db.Model, UserMixin):
         id (Column): The primary key, an integer representing the unique identifier for the user.
         _name (Column): A string representing the user's name. It is not unique and cannot be null.
         _uid (Column): A unique string identifier for the user, cannot be null.
+        _email (Column): A string representing the user's email address. It is not unique and cannot be null.
+        _sid (Column): A string representing the user's student ID. It is not unique and can be null.
         _password (Column): A string representing the hashed password of the user. It is not unique and cannot be null.
         _role (Column): A string representing the user's role within the application. Defaults to "User".
         _pfp (Column): A string representing the path to the user's profile picture. It can be null.
@@ -146,6 +148,7 @@ class User(db.Model, UserMixin):
     _name = db.Column(db.String(255), unique=False, nullable=False)
     _uid = db.Column(db.String(255), unique=True, nullable=False)
     _email = db.Column(db.String(255), unique=False, nullable=False)
+    _sid = db.Column(db.String(255), unique=False, nullable=True)
     _password = db.Column(db.String(255), unique=False, nullable=False)
     _role = db.Column(db.String(20), default="User", nullable=False)
     _pfp = db.Column(db.String(255), unique=False, nullable=True)
@@ -162,10 +165,11 @@ class User(db.Model, UserMixin):
     # Define one-to-one relationship with StockUser model
     stock_user = db.relationship("StockUser", backref=db.backref("users", cascade="all"), lazy=True, uselist=False)
 
-    def __init__(self, name, uid, password=app.config["DEFAULT_PASSWORD"], kasm_server_needed=False, role="User", pfp='', grade_data=None, ap_exam=None, school="Unknown"):
+    def __init__(self, name, uid, password=app.config["DEFAULT_PASSWORD"], kasm_server_needed=False, role="User", pfp='', grade_data=None, ap_exam=None, school="Unknown", sid=None):
         self._name = name
         self._uid = uid
         self._email = "?"
+        self._sid = sid
         self.set_password(password)
         self.kasm_server_needed = kasm_server_needed
         self._role = role
@@ -233,6 +237,16 @@ class User(db.Model, UserMixin):
     @uid.setter
     def uid(self, uid):
         self._uid = uid
+
+    # Student ID getter method
+    @property
+    def sid(self):
+        return self._sid
+
+    # Student ID setter function
+    @sid.setter
+    def sid(self, sid):
+        self._sid = sid
 
     # check if uid parameter matches user id in object, return boolean
     def is_uid(self, uid):
@@ -340,6 +354,7 @@ class User(db.Model, UserMixin):
             "uid": self.uid,
             "name": self.name,
             "email": self.email,
+            "sid": self.sid,
             "role": self.role,
             "pfp": self.pfp,
             "kasm_server_needed": self.kasm_server_needed,
@@ -360,6 +375,8 @@ class User(db.Model, UserMixin):
 
         name = inputs.get("name", "")
         uid = inputs.get("uid", "")
+        email = inputs.get("email", "")
+        sid = inputs.get("sid", "")
         password = inputs.get("password", "")
         pfp = inputs.get("pfp", None)
         kasm_server_needed = inputs.get("kasm_server_needed", None)
@@ -375,6 +392,10 @@ class User(db.Model, UserMixin):
             self.name = name
         if uid:
             self.set_uid(uid)
+        if email:
+            self.email = email
+        if sid:
+            self.sid = sid
         if password:
             self.set_password(password)
         if pfp is not None:
@@ -389,7 +410,8 @@ class User(db.Model, UserMixin):
             self.school = school
 
         # Check this on each update
-        self.set_email()
+        if not email:
+            self.set_email()
 
         # Make a KasmUser object to interact with the Kasm API
         kasm_user = KasmUser()
