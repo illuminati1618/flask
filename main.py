@@ -27,9 +27,11 @@ from api.classroom_api import classroom_api
 from model.user import User, initUsers
 from model.user import Section;
 from model.github import GitHubUser
+from model.feedback import Feedback
 from api.analytics import get_date_range
 # from api.grade_api import grade_api
 from api.study import study_api
+from api.feedback_api import feedback_api
 from model.study import Study, initStudies
 from model.classroom import Classroom
 
@@ -59,7 +61,7 @@ app.register_blueprint(student_api)
 # app.register_blueprint(grade_api)
 app.register_blueprint(study_api)
 app.register_blueprint(classroom_api)
-
+app.register_blueprint(feedback_api)
 
 # Tell Flask-Login the view function name of your login route
 login_manager.login_view = "login"
