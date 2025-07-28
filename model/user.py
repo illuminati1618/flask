@@ -411,7 +411,8 @@ class User(db.Model, UserMixin):
 
         # Check this on each update
         if not email:
-            self.set_email()
+            if email == "?":
+                self.set_email()
 
         # Make a KasmUser object to interact with the Kasm API
         kasm_user = KasmUser()
