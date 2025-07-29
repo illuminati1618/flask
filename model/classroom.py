@@ -1,6 +1,13 @@
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
-from __init__ import db  # Your SQLAlchemy db instance
+from __init__ import db
+
+# Association table for many-to-many between classrooms and students
+classroom_student = db.Table(
+    'classroom_student',
+    db.Column('classroom_id', db.Integer, db.ForeignKey('classrooms.id'), primary_key=True),
+    db.Column('student_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
+)
 
 class Classroom(db.Model):
     __tablename__ = 'classrooms'
@@ -12,6 +19,14 @@ class Classroom(db.Model):
     _status = db.Column(db.String(50), default='active')
     _created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # Many-to-many relationship with User (students)
+    students = db.relationship(
+        'User',
+        secondary=classroom_student,
+        backref=db.backref('classrooms', lazy='dynamic'),
+        lazy='dynamic'
+    )
+
     def __init__(self, name, school_name, owner_teacher_id, status='active'):
         self._name = name
         self._school_name = school_name
@@ -19,43 +34,27 @@ class Classroom(db.Model):
         self._status = status
 
     @property
-    def name(self):
-        return self._name
-
+    def name(self): return self._name
     @name.setter
-    def name(self, val):
-        self._name = val
+    def name(self, val): self._name = val
 
     @property
-    def school_name(self):
-        return self._school_name
-
+    def school_name(self): return self._school_name
     @school_name.setter
-    def school_name(self, val):
-        self._school_name = val
+    def school_name(self, val): self._school_name = val
 
     @property
-    def owner_teacher_id(self):
-        return self._owner_teacher_id
-
+    def owner_teacher_id(self): return self._owner_teacher_id
     @owner_teacher_id.setter
-    def owner_teacher_id(self, val):
-        self._owner_teacher_id = val
+    def owner_teacher_id(self, val): self._owner_teacher_id = val
 
     @property
-    def status(self):
-        return self._status
-
+    def status(self): return self._status
     @status.setter
-    def status(self, val):
-        self._status = val
+    def status(self, val): self._status = val
 
     @property
-    def created_at(self):
-        return self._created_at
-
-    def __str__(self):
-        return str(self.to_dict())
+    def created_at(self): return self._created_at
 
     def create(self):
         try:
@@ -84,11 +83,6 @@ class Classroom(db.Model):
             'school_name': self.school_name,
             'owner_teacher_id': self.owner_teacher_id,
             'status': self.status,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'students': [s.id for s in self.students]
         }
-# Only for dev setup — safe to remove after table is created
-if __name__ == "__main__":
-    from __init__ import app, db
-    with app.app_context():
-        Classroom.__table__.create(db.engine, checkfirst=True)
-        print("✅ Classroom table created.")
