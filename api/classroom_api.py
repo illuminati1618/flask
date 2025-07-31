@@ -77,6 +77,17 @@ def remove_student_from_classroom(id, student_id):
     classroom_name = getattr(classroom, "name", f"ID {classroom.id}")
     return {"message": f"Student {student_name} removed from classroom {classroom_name}"}, 200
 
+def update_classroom(id):
+    classroom = Classroom.query.get_or_404(id)
+    data = request.get_json()
+    name = data.get('name')
+    if name:
+        classroom.name = name
+        db.session.commit()
+        return jsonify(classroom.to_dict())
+    return {"message": "No valid fields to update"}, 400
+
+
 
 # ROUTES
 
@@ -84,6 +95,7 @@ classroom_api.route('/', methods=['GET'])(get_all_classrooms)
 classroom_api.route('/<int:id>', methods=['GET'])(get_classroom_by_id)
 classroom_api.route('/', methods=['POST'])(create_new_classroom)
 classroom_api.route('/<int:id>', methods=['DELETE'])(delete_classroom_by_id)
+classroom_api.route('/<int:id>', methods=['PUT'])(update_classroom)
 
 classroom_api.route('/<int:id>/students', methods=['GET'])(list_students_in_classroom)
 classroom_api.route('/<int:id>/students/<int:student_id>', methods=['GET'])(get_student_in_classroom)
