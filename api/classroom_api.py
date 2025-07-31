@@ -1,37 +1,63 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
 from __init__ import db
 from model.classroom import Classroom
 from model.user import User
+from api.jwt_authorize import token_required
 
 classroom_api = Blueprint('classroom_api', __name__, url_prefix='/api/classrooms')
 
+@token_required()
 def get_all_classrooms():
-    classrooms = Classroom.query.all()
+    current_user = g.current_user
+    if current_user.role == 'Admin':
+        classrooms = Classroom.query.all()
+    else:
+        classrooms = Classroom.query.filter_by(_school_name=current_user.school).all()
     return jsonify([c.to_dict() for c in classrooms])
 
+@token_required()
 def get_classroom_by_id(id):
     classroom = Classroom.query.get_or_404(id)
+    current_user = g.current_user
+    if current_user.role != 'Admin' and classroom.school_name != current_user.school:
+        return {"message": "Access denied"}, 403
     return jsonify(classroom.to_dict())
 
+@token_required()
 def create_new_classroom():
+    current_user = g.current_user
+    if current_user.role not in ['Admin', 'Teacher']:
+        return {"message": "Permission denied"}, 403
+
     data = request.get_json()
     name = data.get('name')
     if not name:
         return {"message": "Classroom name is required"}, 400
 
-    classroom = Classroom(name=name)
+    # Use current_user.school for classroom.school_name, owner_teacher_id = current_user.id
+    classroom = Classroom(name=name, school_name=current_user.school, owner_teacher_id=current_user.id)
     classroom.create()
     return jsonify(classroom.to_dict()), 201
 
+@token_required()
 def delete_classroom_by_id(id):
     classroom = Classroom.query.get_or_404(id)
-    db.session.delete(classroom)
-    db.session.commit()
+    current_user = g.current_user
+    if current_user.role not in ['Admin', 'Teacher']:
+        return {"message": "Permission denied"}, 403
+    if current_user.role != 'Admin' and classroom.school_name != current_user.school:
+        return {"message": "Access denied"}, 403
+
+    classroom.delete()
     return {"message": "Classroom deleted"}, 200
 
+@token_required()
 def list_students_in_classroom(id):
     classroom = Classroom.query.get_or_404(id)
-    # Use dict representation if possible, else fallback
+    current_user = g.current_user
+    if current_user.role != 'Admin' and classroom.school_name != current_user.school:
+        return {"message": "Access denied"}, 403
+
     students = []
     for s in classroom.students:
         try:
@@ -40,45 +66,71 @@ def list_students_in_classroom(id):
             students.append({"id": s.id, "name": getattr(s, "name", None)})
     return jsonify(students)
 
+@token_required()
 def get_student_in_classroom(id, student_id):
     classroom = Classroom.query.get_or_404(id)
+    current_user = g.current_user
+    if current_user.role != 'Admin' and classroom.school_name != current_user.school:
+        return {"message": "Access denied"}, 403
+
     student = User.query.get_or_404(student_id)
     if not classroom.students.filter_by(id=student.id).first():
         return {"message": "Student not in this classroom"}, 404
+
     try:
         return jsonify(student.to_dict())
     except AttributeError:
         return jsonify({"id": student.id, "name": getattr(student, "name", None)})
 
+@token_required()
 def add_student_to_classroom(id, student_id):
     classroom = Classroom.query.get_or_404(id)
-    student = User.query.get_or_404(student_id)
+    current_user = g.current_user
+    if current_user.role not in ['Admin', 'Teacher']:
+        return {"message": "Permission denied"}, 403
+    if current_user.role != 'Admin' and classroom.school_name != current_user.school:
+        return {"message": "Access denied"}, 403
 
+    student = User.query.get_or_404(student_id)
     if classroom.students.filter_by(id=student.id).first():
         return {"message": "Student already in classroom"}, 400
 
     classroom.students.append(student)
     db.session.commit()
-    # Use _name or fallback to id if username not available
+
     student_name = getattr(student, "username", None) or getattr(student, "_name", None) or f"ID {student.id}"
     classroom_name = getattr(classroom, "name", f"ID {classroom.id}")
     return {"message": f"Student {student_name} added to classroom {classroom_name}"}, 201
 
+@token_required()
 def remove_student_from_classroom(id, student_id):
     classroom = Classroom.query.get_or_404(id)
-    student = User.query.get_or_404(student_id)
+    current_user = g.current_user
+    if current_user.role not in ['Admin', 'Teacher']:
+        return {"message": "Permission denied"}, 403
+    if current_user.role != 'Admin' and classroom.school_name != current_user.school:
+        return {"message": "Access denied"}, 403
 
+    student = User.query.get_or_404(student_id)
     if not classroom.students.filter_by(id=student.id).first():
         return {"message": "Student not in this classroom"}, 404
 
     classroom.students.remove(student)
     db.session.commit()
+
     student_name = getattr(student, "username", None) or getattr(student, "_name", None) or f"ID {student.id}"
     classroom_name = getattr(classroom, "name", f"ID {classroom.id}")
     return {"message": f"Student {student_name} removed from classroom {classroom_name}"}, 200
 
+@token_required()
 def update_classroom(id):
     classroom = Classroom.query.get_or_404(id)
+    current_user = g.current_user
+    if current_user.role not in ['Admin', 'Teacher']:
+        return {"message": "Permission denied"}, 403
+    if current_user.role != 'Admin' and classroom.school_name != current_user.school:
+        return {"message": "Access denied"}, 403
+
     data = request.get_json()
     name = data.get('name')
     if name:
@@ -86,7 +138,6 @@ def update_classroom(id):
         db.session.commit()
         return jsonify(classroom.to_dict())
     return {"message": "No valid fields to update"}, 400
-
 
 
 # ROUTES
