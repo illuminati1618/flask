@@ -1,6 +1,6 @@
 import os
 import requests
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session 
 from flask_restful import Api, Resource
 from model.feedback import Feedback
 from __init__ import app, db
@@ -17,6 +17,7 @@ class FeedbackAPI:
             data = request.get_json()
             title = data.get('title')
             body = data.get('body')
+            github_username = data.get('uid', 'Anonymous')
 
             if not title or not body:
                 return {"message": "Title and body are required."}, 400
@@ -26,8 +27,9 @@ class FeedbackAPI:
             # Ensure type is a valid GitHub label
             valid_types = ['Bug', 'Feature Request', 'Inquiry', 'Other']
             label = type if type in valid_types else 'Other'
+            author_note = f"_Submitted by @{github_username}_" if github_username != 'Anonymous' else "_Submitted by [Anonymous]_"
 
-            feedback = Feedback(title, body, type).create()
+            feedback = Feedback(title, body, type, github_username).create()
 
             # Attempt to create GitHub issue
             headers = {
@@ -37,7 +39,7 @@ class FeedbackAPI:
 
             payload = {
                 "title": f"[User Feedback] {title}",
-                "body": body,
+                "body": f"{body}\n\n{author_note}",
                 "labels": ["User Input", label]  # add both base label and type-specific
             }
 
@@ -62,6 +64,8 @@ class FeedbackAPI:
         def get(self):
             feedbacks = Feedback.query.order_by(Feedback.created_at.desc()).all()
             return jsonify([f.read() for f in feedbacks])
+        
 
 api.add_resource(FeedbackAPI._Create, '/')
 api.add_resource(FeedbackAPI._ReadAll, '/all')
+
