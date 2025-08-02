@@ -65,7 +65,47 @@ class FeedbackAPI:
             feedbacks = Feedback.query.order_by(Feedback.created_at.desc()).all()
             return jsonify([f.read() for f in feedbacks])
         
+    class _UserFeedback(Resource):
+        def get(self, uid):
+            feedbacks = Feedback.query.filter_by(github_username=uid).order_by(Feedback.created_at.desc()).all()
+
+            headers = {
+                "Authorization": f"Bearer {GITHUB_TOKEN}",
+                "Accept": "application/vnd.github+json"
+            }
+
+            result = []
+            for fb in feedbacks:
+                status = "Unknown"
+                try:
+                    if fb.github_issue_url:
+                        # Extract issue number from the URL
+                        parts = fb.github_issue_url.rstrip("/").split("/")
+                        issue_number = parts[-1]
+
+                        # Call GitHub API to get issue status
+                        response = requests.get(
+                            f"https://api.github.com/repos/{GITHUB_REPO}/issues/{issue_number}",
+                            headers=headers
+                        )
+                        if response.status_code == 200:
+                            issue_data = response.json()
+                            status = issue_data.get("state", "Unknown").capitalize()  # Open or Closed
+                        else:
+                            print(f"GitHub issue fetch failed for issue {issue_number}: {response.status_code}")
+                except Exception as e:
+                    print(f"Error checking issue status: {e}")
+
+                result.append({
+                    "title": fb.title,
+                    "created_at": fb.created_at.isoformat(),
+                    "type": fb.type,
+                    "github_issue_url": fb.github_issue_url,
+                    "status": status
+                })
+
+            return jsonify(result)
 
 api.add_resource(FeedbackAPI._Create, '/')
 api.add_resource(FeedbackAPI._ReadAll, '/all')
-
+api.add_resource(FeedbackAPI._UserFeedback, '/user/<string:uid>')
