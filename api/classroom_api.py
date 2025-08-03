@@ -6,14 +6,20 @@ from api.jwt_authorize import token_required
 
 classroom_api = Blueprint('classroom_api', __name__, url_prefix='/api/classrooms')
 
+
 @token_required()
 def get_all_classrooms():
     current_user = g.current_user
     if current_user.role == 'Admin':
         classrooms = Classroom.query.all()
     else:
-        classrooms = Classroom.query.filter_by(_school_name=current_user.school).all()
+        user_school = current_user.school.strip()
+        # Fetch all classrooms, then filter in Python (only for debugging)
+        all_classrooms = Classroom.query.all()
+        classrooms = [c for c in all_classrooms if c.school_name.strip() == user_school]
     return jsonify([c.to_dict() for c in classrooms])
+
+
 
 @token_required()
 def get_classroom_by_id(id):
@@ -22,6 +28,7 @@ def get_classroom_by_id(id):
     if current_user.role != 'Admin' and classroom.school_name != current_user.school:
         return {"message": "Access denied"}, 403
     return jsonify(classroom.to_dict())
+
 
 @token_required()
 def create_new_classroom():
@@ -34,10 +41,14 @@ def create_new_classroom():
     if not name:
         return {"message": "Classroom name is required"}, 400
 
-    # Use current_user.school for classroom.school_name, owner_teacher_id = current_user.id
-    classroom = Classroom(name=name, school_name=current_user.school, owner_teacher_id=current_user.id)
+    classroom = Classroom(
+        name=name,
+        school_name=current_user.school,
+        owner_teacher_id=current_user.id
+    )
     classroom.create()
     return jsonify(classroom.to_dict()), 201
+
 
 @token_required()
 def delete_classroom_by_id(id):
@@ -50,6 +61,25 @@ def delete_classroom_by_id(id):
 
     classroom.delete()
     return {"message": "Classroom deleted"}, 200
+
+
+@token_required()
+def update_classroom(id):
+    classroom = Classroom.query.get_or_404(id)
+    current_user = g.current_user
+    if current_user.role not in ['Admin', 'Teacher']:
+        return {"message": "Permission denied"}, 403
+    if current_user.role != 'Admin' and classroom.school_name != current_user.school:
+        return {"message": "Access denied"}, 403
+
+    data = request.get_json()
+    name = data.get('name')
+    if name:
+        classroom.name = name
+        db.session.commit()
+        return jsonify(classroom.to_dict())
+    return {"message": "No valid fields to update"}, 400
+
 
 @token_required()
 def list_students_in_classroom(id):
@@ -66,6 +96,7 @@ def list_students_in_classroom(id):
             students.append({"id": s.id, "name": getattr(s, "name", None)})
     return jsonify(students)
 
+
 @token_required()
 def get_student_in_classroom(id, student_id):
     classroom = Classroom.query.get_or_404(id)
@@ -81,6 +112,7 @@ def get_student_in_classroom(id, student_id):
         return jsonify(student.to_dict())
     except AttributeError:
         return jsonify({"id": student.id, "name": getattr(student, "name", None)})
+
 
 @token_required()
 def add_student_to_classroom(id, student_id):
@@ -102,6 +134,7 @@ def add_student_to_classroom(id, student_id):
     classroom_name = getattr(classroom, "name", f"ID {classroom.id}")
     return {"message": f"Student {student_name} added to classroom {classroom_name}"}, 201
 
+
 @token_required()
 def remove_student_from_classroom(id, student_id):
     classroom = Classroom.query.get_or_404(id)
@@ -121,23 +154,6 @@ def remove_student_from_classroom(id, student_id):
     student_name = getattr(student, "username", None) or getattr(student, "_name", None) or f"ID {student.id}"
     classroom_name = getattr(classroom, "name", f"ID {classroom.id}")
     return {"message": f"Student {student_name} removed from classroom {classroom_name}"}, 200
-
-@token_required()
-def update_classroom(id):
-    classroom = Classroom.query.get_or_404(id)
-    current_user = g.current_user
-    if current_user.role not in ['Admin', 'Teacher']:
-        return {"message": "Permission denied"}, 403
-    if current_user.role != 'Admin' and classroom.school_name != current_user.school:
-        return {"message": "Access denied"}, 403
-
-    data = request.get_json()
-    name = data.get('name')
-    if name:
-        classroom.name = name
-        db.session.commit()
-        return jsonify(classroom.to_dict())
-    return {"message": "No valid fields to update"}, 400
 
 
 # ROUTES
