@@ -22,7 +22,7 @@ from api.analytics import analytics_api
 from api.student import student_api
 from api.groq_api import groq_api
 from api.classroom_api import classroom_api
-from api.announcement import announcement_api
+#from api.announcement import announcement_api ##temporary revert
 
 # database Initialization functions
 from model.user import User, initUsers
@@ -35,7 +35,7 @@ from api.study import study_api
 from api.feedback_api import feedback_api
 from model.study import Study, initStudies
 from model.classroom import Classroom
-from model.announcement import Announcement
+# from model.announcement import Announcement ##temporary revert
 
 # server only Views
 
@@ -64,7 +64,7 @@ app.register_blueprint(student_api)
 app.register_blueprint(study_api)
 app.register_blueprint(classroom_api)
 app.register_blueprint(feedback_api)
-app.register_blueprint(announcement_api)
+# app.register_blueprint(announcement_api) ##temporary revert
 
 # Tell Flask-Login the view function name of your login route
 login_manager.login_view = "login"
