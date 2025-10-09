@@ -21,6 +21,7 @@ from api.stock import stock_api
 from api.analytics import analytics_api
 from api.student import student_api
 from api.groq_api import groq_api
+from api.gemini_api import gemini_api
 from api.classroom_api import classroom_api
 from hacks.joke import joke_api  # Import the joke API blueprint
 #from api.announcement import announcement_api ##temporary revert
@@ -59,6 +60,7 @@ app.register_blueprint(section_api)
 app.register_blueprint(pfp_api) 
 app.register_blueprint(stock_api)
 app.register_blueprint(groq_api)
+app.register_blueprint(gemini_api)
 
 app.register_blueprint(analytics_api)
 app.register_blueprint(student_api)
