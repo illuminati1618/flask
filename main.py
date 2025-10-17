@@ -24,6 +24,7 @@ from api.groq_api import groq_api
 from api.gemini_api import gemini_api
 from api.classroom_api import classroom_api
 from hacks.joke import joke_api  # Import the joke API blueprint
+from api.post import post_api  # Import the social media post API
 #from api.announcement import announcement_api ##temporary revert
 
 # database Initialization functions
@@ -37,6 +38,7 @@ from api.study import study_api
 from api.feedback_api import feedback_api
 from model.study import Study, initStudies
 from model.classroom import Classroom
+from model.post import Post, init_posts
 from hacks.jokes import initJokes 
 # from model.announcement import Announcement ##temporary revert
 
@@ -69,6 +71,7 @@ app.register_blueprint(study_api)
 app.register_blueprint(classroom_api)
 app.register_blueprint(feedback_api)
 app.register_blueprint(joke_api)  # Register the joke API blueprint
+app.register_blueprint(post_api)  # Register the social media post API
 # app.register_blueprint(announcement_api) ##temporary revert
 
 # Tell Flask-Login the view function name of your login route
@@ -301,6 +304,8 @@ app.cli.add_command(custom_cli)
         
 # this runs the flask application on the development server
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()  # Create all database tables
     initJokes()  # Initialize jokes data
     # change name for testing
     app.run(debug=True, host="0.0.0.0", port="8587")

@@ -354,18 +354,30 @@ class UserAPI:
                             current_app.config["SECRET_KEY"],
                             algorithm="HS256"
                         )
-                        resp = Response("Authentication for %s successful" % (user._uid))
+                        # Return JSON response with cookie
+                        is_production = not (request.host.startswith('localhost') or request.host.startswith('127.0.0.1'))
+                        
+                        # Create JSON response
+                        response_data = {
+                            "message": f"Authentication for {user._uid} successful",
+                            "user": {
+                                "uid": user._uid,
+                                "name": user.name,
+                                "role": user.role
+                            }
+                        }
+                        resp = jsonify(response_data)
+                        
+                        # Set cookie
                         resp.set_cookie(current_app.config["JWT_TOKEN_NAME"], 
                                 token,
                                 max_age=3600,
-                                secure=True,
-                                httponly=True,
+                                secure=is_production,  # Only secure in production (HTTPS)
+                                httponly=False,  # Allow JavaScript to read for debugging
                                 path='/',
-                                samesite='None'  # This is the key part for cross-site requests
-
-                                            # domain="frontend.com"
+                                samesite='Lax' if not is_production else 'None'  # Lax for localhost, None for production
                          )
-                        print(token)
+                        print(f"Token set: {token}")
                         return resp 
                     except Exception as e:
                         return {
