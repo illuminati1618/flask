@@ -25,7 +25,7 @@ Use this project to create a Flask Server.
 - Open a Terminal, clone a project and `cd` into the project directory.  Use a `different link` and name for `name` for clone to match your repo.
 
 ```bash
-mkdir -p ~/open; cd ~/open
+mkdir -p ~/openccs; cd ~/opencs
 
 git clone https://github.com/open-coding-ocietyflask.git
 
@@ -97,7 +97,7 @@ pip install -r requirements.txt
   - Explore newly created SQL database
     - Navigate too instance/volumes
     - View/open `user_management.db`
-    - Loook at `Users` table in viewer
+    - Loook at `users` table in viewer
 
   - Run the Project
     - Select/open `main.py` in VSCode
@@ -109,6 +109,15 @@ pip install -r requirements.txt
 
   - Basic API test
     - [Jokes](http://127.0.0.1:8587/api/jokes)
+
+  | Purpose | Correct Endpoint | What It Does |
+  |---------|-----------------|--------------|
+  | **Login** | `/api/authenticate` | Authenticates user & sets cookie |
+  | **Get User** | `/api/id` | Gets current logged-in user |
+  | **Signup** | `/api/user` | Creates new user account |
+  | **Posts** | `/api/post/all` | Gets all social media posts |
+  | **Create Post** | `/api/post` | Creates a new post |
+  | **Gemini AI** | `/api/gemini` | Chat with AI assistant |
 
 ## Idea
 
