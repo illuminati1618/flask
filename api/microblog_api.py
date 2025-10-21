@@ -34,7 +34,24 @@ class MicroBlogAPI:
             
             # Optional fields
             topic_id = body.get('topicId')
+            topic_path = body.get('topicPath')  # New field for page path
             data = body.get('data', {})
+            
+            # Handle topic creation/lookup
+            if topic_path and not topic_id:
+                try:
+                    # Auto-create or get topic by page path
+                    topic = Topic.get_or_create_for_page(
+                        page_path=topic_path,
+                        page_title=topic_path.replace('/', ' ').title(),
+                        allow_anonymous=True
+                    )
+                    if topic:
+                        topic_id = topic.id
+                    else:
+                        return {'message': f'Failed to create or find topic for path: {topic_path}'}, 500
+                except Exception as topic_error:
+                    return {'message': f'Error handling topic: {str(topic_error)}'}, 500
             
             try:
                 # Create new micro blog post

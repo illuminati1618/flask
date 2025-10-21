@@ -312,7 +312,7 @@ class Topic(db.Model):
             db.session.add(self)
             db.session.commit()
             return self
-        except IntegrityError:
+        except IntegrityError as e:
             db.session.rollback()
             return None
         except Exception as e:
@@ -395,13 +395,25 @@ class Topic(db.Model):
     @staticmethod
     def get_or_create_for_page(page_path, page_title, **kwargs):
         """Get existing topic or create new one for a page"""
-        topic = Topic.get_by_page_path(page_path)
-        if topic:
-            return topic
-        
-        # Create new topic
-        new_topic = Topic(page_path=page_path, page_title=page_title, **kwargs)
-        return new_topic.create()
+        try:
+            # Check if topic already exists
+            topic = Topic.get_by_page_path(page_path)
+            if topic:
+                return topic
+            
+            # Create new topic
+            new_topic = Topic(page_path=page_path, page_title=page_title, **kwargs)
+            created_topic = new_topic.create()
+            
+            if created_topic is None:
+                print(f"Failed to create topic for page_path: {page_path}")
+                return None
+                
+            return created_topic
+            
+        except Exception as e:
+            print(f"Error in get_or_create_for_page: {str(e)}")
+            return None
     
     @staticmethod
     def get_all_active():
