@@ -110,14 +110,43 @@ pip install -r requirements.txt
   - Basic API test
     - [Jokes](http://127.0.0.1:8587/api/jokes)
 
-  | Purpose | Correct Endpoint | What It Does |
-  |---------|-----------------|--------------|
-  | **Login** | `/api/authenticate` | Authenticates user & sets cookie |
-  | **Get User** | `/api/id` | Gets current logged-in user |
-  | **Signup** | `/api/user` | Creates new user account |
-  | **Posts** | `/api/post/all` | Gets all social media posts |
-  | **Create Post** | `/api/post` | Creates a new post |
-  | **Gemini AI** | `/api/gemini` | Chat with AI assistant |
+### User Operations
+| Purpose | Correct Endpoint | What It Does |
+|---------|-----------------|--------------|
+| **Login** | `/api/authenticate` | Authenticates user & sets cookie |
+| **Get User** | `/api/id` | Gets current logged-in user |
+| **Signup** | `/api/user` | Creates new user account |
+| **Posts** | `/api/post/all` | Gets all social media posts |
+| **Create Post** | `/api/post` | Creates a new post |
+| **Gemini AI** | `/api/gemini` | Chat with AI assistant |
+
+### MicroBlog Operations
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/microblog` | Create new post |
+| GET | `/api/microblog` | Get posts (with filters) |
+| PUT | `/api/microblog` | Update post |
+| DELETE | `/api/microblog` | Delete post |
+
+**Query Parameters for GET:**
+- `?topicId=1` - Posts for specific topic
+- `?userId=123` - Posts by specific user  
+- `?search=flask` - Search content
+- `?limit=20` - Limit results
+
+### MicroBlog Interactions
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/microblog/reply` | Add reply to post |
+| POST | `/api/microblog/reaction` | Add reaction (👍, ❤️, etc.) |
+| DELETE | `/api/microblog/reaction` | Remove reaction |
+
+### Microblog Page Integration
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/microblog/page/<page_key>` | Get posts for specific page |
+| POST | `/api/microblog/topics/auto-create` | Auto-create topic for page |
+| GET | `/api/microblog/topics?pagePath=X` | Get topic by page path |
 
 ## Idea
 

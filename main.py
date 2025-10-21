@@ -22,6 +22,7 @@ from api.analytics import analytics_api
 from api.student import student_api
 from api.groq_api import groq_api
 from api.gemini_api import gemini_api
+from api.microblog_api import microblog_api
 from api.classroom_api import classroom_api
 from hacks.joke import joke_api  # Import the joke API blueprint
 from api.post import post_api  # Import the social media post API
@@ -39,6 +40,7 @@ from api.feedback_api import feedback_api
 from model.study import Study, initStudies
 from model.classroom import Classroom
 from model.post import Post, init_posts
+from model.microblog import MicroBlog, Topic, init_microblogs
 from hacks.jokes import initJokes 
 # from model.announcement import Announcement ##temporary revert
 
@@ -63,6 +65,7 @@ app.register_blueprint(pfp_api)
 app.register_blueprint(stock_api)
 app.register_blueprint(groq_api)
 app.register_blueprint(gemini_api)
+app.register_blueprint(microblog_api)
 
 app.register_blueprint(analytics_api)
 app.register_blueprint(student_api)
@@ -298,6 +301,7 @@ custom_cli = AppGroup('custom', help='Custom commands')
 @custom_cli.command('generate_data')
 def generate_data():
     initUsers()
+    init_microblogs()
 
 # Register the custom command group with the Flask application
 app.cli.add_command(custom_cli)
