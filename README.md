@@ -59,8 +59,8 @@ pip install -r requirements.txt
 
   - Make a local `.env` file in root of project to contain your secret passwords
 
-  ```shella
-  # Reset Password
+  ```shell
+  # Reset password for users who forget their password
   DEFAULT_PASSWORD='123Qwerty!'
   # Admin user defaults
   ADMIN_USER='Thomas Edison'
@@ -72,6 +72,20 @@ pip install -r requirements.txt
   DEFAULT_UID='hop'
   DEFAULT_USER_PASSWORD='123Hop!'
   DEFAULT_USER_PFP='hop.png'
+  # Obtain key, [Google AI Studio](https://aistudio.google.com/api-keys)
+  GEMINI_API_KEY=xxxxx
+  GEMINI_SERVER=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
+  # GitHub Configuation
+  GITHUB_TOKEN=ghp_xxx
+  GITHUB_TARGET_TYPE=user  # Use 'organization' or 'user'
+  GITHUB_TARGET_NAME=Open-Coding-Society
+  # KASM Configuration (server is defaulted)
+  KASM_SERVER=https://kasm.opencodingsociety.com
+  KASM_API_KEY_SECRET=xxxx
+  KASM_API_KEY=xxx
+  # DB Configuration, AWS RDS
+  DB_USERNAME='admin'
+  DB_PASSWORD='xxxxx'
   ```
 
   - Make the database and init data.
@@ -93,29 +107,32 @@ pip install -r requirements.txt
       - Output window will contain page to launch http://127.0.0.1:8587
     - Login using your secrets
 
+  - Basic API test
+    - [Jokes](http://127.0.0.1:8587/api/jokes)
+
 ## Idea
-
-### Visual thoughts
-
-> The Starter code should be fun and practical.
-
-- Organize with Bootstrap menu
-- Add some color and fun through VANTA Visuals (birds, halo, solar, net)
-- Show some practical and fun links (HREFs) like Twitter, Git, Youtube
-- Build a Sample Page (Table)
-- Show the project-specific links (HREFs) per page
 
 ### Files and Directories in this Project
 
-The key files and directories in this project are in this online article.
+The key files and directories in this project are in these online articles.  However, this needs updating!!!
 
 [Flask Anatomy](https://pages.opencodingsociety.com/flask-anatomy)
+
+[Flask Files](https://pages.opencodingsociety.com/flask-structure-overview)
 
 Or read this entire series of articles starting with the Intro, Anatomy, and more ...
 
 [Flask Intro](https://pages.opencodingsociety.com/flask-intro)
 
 ### Implementation Summary
+
+#### Oct 2025
+
+> Updates for 2025-2026 school year.  Focus on documentation and API functionality.
+
+- Work to make documentation materials useful.
+- Add gemini API's
+- Add flocker API's, social medai support
 
 #### July 2024
 
