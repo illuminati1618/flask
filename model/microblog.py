@@ -37,7 +37,7 @@ class MicroBlog(db.Model):
     
     # Relationships
     user = db.relationship('User', foreign_keys=[_user_id], backref=db.backref('microblogs', lazy=True))
-    # topic = db.relationship('Topic', foreign_keys=[_topic_id], backref=db.backref('microblogs', lazy=True))
+    topic = db.relationship('Topic', foreign_keys=[_topic_id], backref=db.backref('microblogs', lazy=True))
 
     def __init__(self, user_id, content, topic_id=None, data=None):
         """
@@ -72,7 +72,13 @@ class MicroBlog(db.Model):
             raise e
 
     def read(self):
-        """Read micro blog data as a dictionary"""
+        """Read micro blog data as a dictionary, including topic key and path if available"""
+        # Get topic info if available
+        topic_key = None
+        topic_path = None
+        if self.topic:
+            topic_key = getattr(self.topic, '_page_key', None)
+            topic_path = getattr(self.topic, '_page_path', None)
         base_data = {
             'id': self.id,
             'userId': self._user_id,
@@ -80,17 +86,17 @@ class MicroBlog(db.Model):
             'userUid': self.user.uid if self.user else None,
             'content': self._content,
             'topicId': self._topic_id,
+            'topicKey': topic_key,
+            'topicPath': topic_path,
             'timestamp': self._timestamp.isoformat() if self._timestamp else None,
             'updatedAt': self._updated_at.isoformat() if self._updated_at else None,
             'characterCount': len(self._content),
         }
-        
         # Merge with JSON data, giving priority to base_data for core fields
         if self._data:
             merged_data = {**self._data, **base_data}
         else:
             merged_data = base_data
-            
         return merged_data
 
     def update(self, content=None, data=None):
@@ -264,7 +270,7 @@ class Topic(db.Model):
     _settings = db.Column(JSON, nullable=True)  # Custom settings per topic
     
     # Relationship
-    microblogs = db.relationship('MicroBlog', foreign_keys='MicroBlog._topic_id', backref='topic')
+    # microblogs backref is provided by MicroBlog.topic relationship
     
     def __init__(self, page_path, page_title, page_description=None, display_name=None, 
                  color='#007bff', icon=None, allow_anonymous=False, moderated=False, 
