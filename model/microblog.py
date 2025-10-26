@@ -547,7 +547,7 @@ def init_microblogs():
         # Create sample micro blog posts for different pages
         sample_posts = [
             {
-                "content": "Just finished the Flask intro lesson! The routing concept is clearer now 🚀",
+                "content": "Just finished the Flask intro lesson! The routing concept is clearer now",
                 "topic_id": created_topics[0].id,  # Flask Introduction
                 "data": {
                     "lessonProgress": "completed",
@@ -558,7 +558,7 @@ def init_microblogs():
                 }
             },
             {
-                "content": "The JavaScript array methods are tricky! Anyone have tips for remembering map vs filter? 🤔",
+                "content": "The JavaScript array methods are tricky! Anyone have tips for remembering map vs filter?",
                 "topic_id": created_topics[1].id,  # JavaScript Basics
                 "data": {
                     "helpRequested": True,
@@ -569,7 +569,7 @@ def init_microblogs():
                 }
             },
             {
-                "content": "Excited to share my portfolio! Added a new React project with dark mode toggle ✨",
+                "content": "Excited to share my portfolio! Added a new React project with dark mode toggle",
                 "topic_id": created_topics[2].id,  # Portfolio Showcase
                 "data": {
                     "projectType": "react",
@@ -581,7 +581,7 @@ def init_microblogs():
                 }
             },
             {
-                "content": "Today: Working on database models, planning API endpoints, studying for quiz tomorrow 📝",
+                "content": "Today: Working on database models, planning API endpoints, studying for quiz tomorrow",
                 "topic_id": created_topics[3].id,  # Daily Standup
                 "data": {
                     "standupType": "daily",
@@ -594,7 +594,7 @@ def init_microblogs():
                 }
             },
             {
-                "content": "Great study resource: MDN docs have interactive examples. Really helpful for learning! �",
+                "content": "Great study resource: MDN docs have interactive examples. Really helpful for learning!",
                 "topic_id": created_topics[4].id,  # Study Materials
                 "data": {
                     "resourceType": "documentation",
