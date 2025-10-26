@@ -369,14 +369,26 @@ class UserAPI:
                         resp = jsonify(response_data)
                         
                         # Set cookie
-                        resp.set_cookie(current_app.config["JWT_TOKEN_NAME"], 
+                        if is_production:
+                            resp.set_cookie(
+                                current_app.config["JWT_TOKEN_NAME"],
                                 token,
-                                max_age=3600,
-                                secure=is_production,  # Only secure in production (HTTPS)
-                                httponly=False,  # Allow JavaScript to read for debugging
+                                max_age=43200,  # 12 hours in seconds
+                                secure=True,
+                                httponly=True,
                                 path='/',
-                                samesite='Lax' if not is_production else 'None'  # Lax for localhost, None for production
-                         )
+                                samesite='None'
+                            )
+                        else:
+                            resp.set_cookie(
+                                current_app.config["JWT_TOKEN_NAME"],
+                                token,
+                                max_age=43200,  # 12 hours in seconds
+                                secure=False,
+                                httponly=False,  # Set to True for more security if JS access not needed
+                                path='/',
+                                samesite='Lax'
+                            )
                         print(f"Token set: {token}")
                         return resp 
                     except Exception as e:
@@ -412,15 +424,27 @@ class UserAPI:
                 
                 # Prepare a response indicating the token has been invalidated
                 resp = Response("Token invalidated successfully")
-                resp.set_cookie(
-                    current_app.config["JWT_TOKEN_NAME"], 
-                    token,
-                    max_age=0,  # Immediately expire the cookie
-                    secure=True,
-                    httponly=True,
-                    path='/',
-                    samesite='None'
-                )
+                is_production = not (request.host.startswith('localhost') or request.host.startswith('127.0.0.1'))
+                if is_production:
+                    resp.set_cookie(
+                        current_app.config["JWT_TOKEN_NAME"],
+                        token,
+                        max_age=0,  # Immediately expire the cookie
+                        secure=True,
+                        httponly=True,
+                        path='/',
+                        samesite='None'
+                    )
+                else:
+                    resp.set_cookie(
+                        current_app.config["JWT_TOKEN_NAME"],
+                        token,
+                        max_age=0,  # Immediately expire the cookie
+                        secure=False,
+                        httponly=False,  # Set to True for more security if JS access not needed
+                        path='/',
+                        samesite='Lax'
+                    )
                 return resp
             except Exception as e:
                 return {
