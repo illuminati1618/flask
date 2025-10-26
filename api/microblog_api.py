@@ -79,24 +79,30 @@ class MicroBlogAPI:
             # Query parameters
             limit = request.args.get('limit', 50, type=int)
             topic_id = request.args.get('topicId', type=int)
+            page_path = request.args.get('pagePath')
             user_id = request.args.get('userId', type=int)
             search = request.args.get('search')
             
             try:
+                page_path = request.args.get('pagePath')
                 if search:
                     microblogs = MicroBlog.search_content(search, limit)
                 elif topic_id:
                     microblogs = MicroBlog.get_by_topic(topic_id, limit)
+                elif page_path:
+                    topic = Topic.get_by_page_path(page_path)
+                    if topic:
+                        microblogs = MicroBlog.get_by_topic(topic.id, limit)
+                    else:
+                        microblogs = []
                 elif user_id:
                     microblogs = MicroBlog.get_by_user(user_id, limit)
                 else:
                     microblogs = MicroBlog.get_all(limit)
-                
                 return jsonify({
                     'microblogs': microblogs,
                     'count': len(microblogs)
                 })
-                
             except Exception as e:
                 return {'message': f'Error retrieving micro blog posts: {str(e)}'}, 500
         
@@ -460,42 +466,37 @@ class TopicAPI:
         @token_required()
         def post(self):
             """Auto-create or get topic for a page"""
-            current_user = g.current_user
-            body = request.get_json()
-            
-            if not body:
-                return {'message': 'Request body is required'}, 400
-            
-            page_path = body.get('pagePath')
-            page_title = body.get('pageTitle')
-            
-            if not page_path or not page_title:
-                return {'message': 'Page path and title are required'}, 400
-            
+            # Query parameters
+            limit = request.args.get('limit', 50, type=int)
+            topic_id = request.args.get('topicId', type=int)
+            user_id = request.args.get('userId', type=int)
+            search = request.args.get('search')
+            page_path = request.args.get('pagePath')
+
             try:
-                # Get or create topic for this page
-                topic = Topic.get_or_create_for_page(
-                    page_path=page_path,
-                    page_title=page_title,
-                    page_description=body.get('pageDescription'),
-                    display_name=body.get('displayName'),
-                    color=body.get('color', '#007bff'),
-                    icon=body.get('icon'),
-                    allow_anonymous=body.get('allowAnonymous', True),
-                    moderated=body.get('moderated', False),
-                    max_posts_per_user=body.get('maxPostsPerUser', 10)
-                )
-                
-                if not topic:
-                    return {'message': 'Failed to create or retrieve topic'}, 500
-                
+                if search:
+                    microblogs = MicroBlog.search_content(search, limit)
+                elif topic_id:
+                    microblogs = MicroBlog.get_by_topic(topic_id, limit)
+                elif page_path:
+                    topic = Topic.get_by_page_path(page_path)
+                    if topic:
+                        microblogs = MicroBlog.get_by_topic(topic.id, limit)
+                    else:
+                        return jsonify({'microblogs': [], 'count': 0, 'message': 'No topic found for this pagePath'}), 200
+                elif user_id:
+                    microblogs = MicroBlog.get_by_user(user_id, limit)
+                else:
+                    microblogs = MicroBlog.get_all(limit)
+
                 return jsonify({
-                    'topic': topic.read(),
-                    'created': topic._created_at == topic._updated_at  # True if just created
+                    'microblogs': microblogs,
+                    'count': len(microblogs)
                 })
-                
+
             except Exception as e:
-                return {'message': f'Error creating/retrieving topic: {str(e)}'}, 500
+                return {'message': f'Error retrieving micro blog posts: {str(e)}'}, 500
+                # ...existing code...
 
 
 # Register endpoints with unique endpoint names
