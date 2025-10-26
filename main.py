@@ -302,16 +302,15 @@ custom_cli = AppGroup('custom', help='Custom commands')
 def generate_data():
     initUsers()
     init_microblogs()
+    init_jokes()
 
 # Register the custom command group with the Flask application
 app.cli.add_command(custom_cli)
         
 # this runs the flask application on the development server
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()  # Create all database tables
-    initJokes()  # Initialize jokes data
-    # change name for testing
-    app.run(debug=True, host="0.0.0.0", port="8587")
+    host = "0.0.0.0"
+    port = 8587
+    print(f"Server running: http://localhost:{port}/")  # Pretty link
+    app.run(debug=True, host=host, port=port)
     
-
