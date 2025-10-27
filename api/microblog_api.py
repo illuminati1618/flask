@@ -77,7 +77,7 @@ class MicroBlogAPI:
         def get(self):
             """Get micro blog posts with optional filtering"""
             # Query parameters
-            limit = request.args.get('limit', 50, type=int)
+            limit = request.args.get('limit', 200, type=int)
             topic_id = request.args.get('topicId', type=int)
             page_path = request.args.get('pagePath')
             user_id = request.args.get('userId', type=int)
